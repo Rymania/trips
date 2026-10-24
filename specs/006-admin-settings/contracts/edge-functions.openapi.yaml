@@ -1,0 +1,167 @@
+openapi: 3.1.0
+info:
+  title: Trips Edge Functions — admin settings
+  version: 1.0.0
+  description: |
+    Admin-only Supabase Edge Functions added by spec 006. Every endpoint
+    verifies the bearer token, then calls `is_admin()` as the caller, and
+    returns 403 `not_admin` if it is false. Each successful call writes one
+    `admin_audit_log` entry. Error shape matches spec 005's `Error`.
+servers:
+  - url: http://127.0.0.1:54321/functions/v1
+    description: Local Supabase stack
+  - url: https://{projectRef}.supabase.co/functions/v1
+    variables:
+      projectRef:
+        default: your-project-ref
+security:
+  - bearerAuth: []
+paths:
+  /admin-set-status:
+    post:
+      summary: Deactivate or reactivate a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, status]
+              properties:
+                userId: { type: string, format: uuid }
+                status: { type: string, enum: [active, deactivated] }
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+                  description: Required when status is deactivated.
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserSummary' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Tried to deactivate yourself (`cannot_deactivate_self`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /admin-update-email:
+    post:
+      summary: Change a user's sign-in email and notify both addresses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, email]
+              properties:
+                userId: { type: string, format: uuid }
+                email: { type: string, format: email, maxLength: 254 }
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserSummary' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Email already used by another account (`email_taken`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /admin-send-email:
+    post:
+      summary: Send a one-off plain-text email to a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, subject, body]
+              properties:
+                userId: { type: string, format: uuid }
+                subject: { type: string, minLength: 1, maxLength: 120 }
+                body: { type: string, minLength: 1, maxLength: 5000 }
+      responses:
+        '202':
+          description: Accepted by the email provider.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [messageId]
+                properties:
+                  messageId: { type: string }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429':
+          description: More than 20 emails by this admin in the last hour (`rate_limited`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '502':
+          description: Email provider failed (`email_failed`); nothing was audited as sent.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Supabase access token (JWT)
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+    UserSummary:
+      type: object
+      required: [id, email, role, status, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        displayName: { type: [string, 'null'] }
+        role: { type: string, enum: [admin, user] }
+        status: { type: string, enum: [active, deactivated] }
+        createdAt: { type: string, format: date-time }
+        lastSignInAt: { type: [string, 'null'], format: date-time }
+  responses:
+    BadRequest:
+      description: Validation failed (`invalid_request`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Missing or invalid access token (`unauthorized`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Caller is not an admin (`not_admin`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: No such user (`user_not_found`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
