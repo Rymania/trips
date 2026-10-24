@@ -18,27 +18,27 @@ description: 'Task list for 005 User Settings'
 
 ## Phase 1: Setup
 
-- [ ] T001 Add the `supabase` CLI and `@playwright/test` as dev dependencies, and `@supabase/supabase-js@2` as a runtime dependency, in `package.json`. Add `e2e` and `db:test` scripts
-- [ ] T002 Run `npx supabase init` to create `supabase/config.toml`. Set `site_url` and `additional_redirect_urls` to `http://localhost:5173` and `http://localhost:8080`, and the email OTP length to 6
-- [ ] T003 [P] Add `.env.example` with `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`, and add `.env` to `.gitignore` and `.dockerignore`
-- [ ] T004 [P] Add `VITE_SUPABASE_*` build `ARG`s to `Dockerfile`, and pass them from `.env` as build args in `compose.yaml`
-- [ ] T005 [P] Add `e2e/playwright.config.ts` and `e2e/helpers/mailpit.ts`, which fetches the latest OTP for an address from the Mailpit API
-- [ ] T006 [P] Extend Vitest coverage `include` to `src/account/**`, and exclude `e2e/` and `supabase/` from Vitest, eslint and tsc
-- [ ] T007 Add a `supabase` CI job to `.github/workflows/build.yml` that runs `supabase/setup-cli`, `supabase start`, `db lint`, `test db`, `npm run e2e`, then `supabase stop`
-- [ ] T008 [P] Add a CI bundle size check that fails if the main JS is over 150 KB gzipped
+- [x] T001 Add the `supabase` CLI and `@playwright/test` as dev dependencies, and `@supabase/supabase-js@2` as a runtime dependency, in `package.json`. Add `e2e` and `db:test` scripts
+- [x] T002 Run `npx supabase init` to create `supabase/config.toml`. Set `site_url` and `additional_redirect_urls` to `http://localhost:5173` and `http://localhost:8080`, and the email OTP length to 6
+- [x] T003 [P] Add `.env.example` with `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`, and add `.env` to `.gitignore` and `.dockerignore`
+- [x] T004 [P] Add `VITE_SUPABASE_*` build `ARG`s to `Dockerfile`, and pass them from `.env` as build args in `compose.yaml`
+- [x] T005 [P] Add `e2e/playwright.config.ts` and `e2e/helpers/mailpit.ts`, which fetches the latest OTP for an address from the Mailpit API
+- [x] T006 [P] Extend Vitest coverage `include` to `src/account/**`, and exclude `e2e/` and `supabase/` from Vitest, eslint and tsc
+- [x] T007 Add a `supabase` CI job to `.github/workflows/build.yml` that runs `supabase/setup-cli`, `supabase start`, `db lint`, `test db`, `npm run e2e`, then `supabase stop`
+- [x] T008 [P] Add a CI bundle size check that fails if the main JS is over 150 KB gzipped
 
 ---
 
 ## Phase 2: Foundational (blocks every story)
 
-- [ ] T009 Write `supabase/tests/005_user_settings_rls.test.sql`, covering cases 1–8 from contracts/rls-policies.md. It must fail because the tables don't exist yet
-- [ ] T010 Write migration `supabase/migrations/20261024000100_user_settings.sql` with the four tables, constraints, `set_updated_at` and family limit triggers, `handle_new_user` trigger, RLS policies and grants. Pass T009
-- [ ] T011 Generate `src/account/database.types.ts` with `supabase gen types typescript --local`, and add a `db:types` script
-- [ ] T012 [P] Write the test `src/account/client.test.ts`: when the env vars are missing, `getClient()` returns null and `accountsEnabled` is false
-- [ ] T013 Implement `src/account/client.ts`: lazy `import('@supabase/supabase-js')`, a single shared client, and `hasStoredSession()` that checks localStorage synchronously
-- [ ] T014 [P] Write tests for `src/routes/useRoute.ts`: push and replace, back and forward, and unknown paths falling back to `/`
-- [ ] T015 Implement `src/routes/useRoute.ts`, and wire lazy routes with a `<Suspense>` skeleton into `src/App.tsx`
-- [ ] T016 [P] Add the account, settings and saved trips strings to `src/i18n/en.ts`
+- [x] T009 Write `supabase/tests/005_user_settings_rls.test.sql`, covering cases 1–8 from contracts/rls-policies.md. It must fail because the tables don't exist yet
+- [x] T010 Write migration `supabase/migrations/20261024000100_user_settings.sql` with the four tables, constraints, `set_updated_at` and family limit triggers, `handle_new_user` trigger, RLS policies and grants. Pass T009
+- [x] T011 Generate `src/account/database.types.ts` with `supabase gen types typescript --local`, and add a `db:types` script
+- [x] T012 [P] Write the test `src/account/client.test.ts`: when the env vars are missing, `getClient()` returns null and `accountsEnabled` is false
+- [x] T013 Implement `src/account/client.ts`: lazy `import('@supabase/supabase-js')`, a single shared client, and `hasStoredSession()` that checks localStorage synchronously
+- [x] T014 [P] Write tests for `src/routes/useRoute.ts`: push and replace, back and forward, and unknown paths falling back to `/`
+- [x] T015 Implement `src/routes/useRoute.ts`, and wire lazy routes with a `<Suspense>` skeleton into `src/App.tsx`
+- [x] T016 [P] Add the account, settings and saved trips strings to `src/i18n/en.ts`
 
 **Checkpoint**: migrations and RLS tests pass, the app routes between pages, and anonymous behaviour is unchanged (existing 21 tests are green).
 
@@ -46,14 +46,14 @@ description: 'Task list for 005 User Settings'
 
 ## Phase 3: US1, sign in (P1) 🎯 MVP
 
-- [ ] T017 [P] [US1] Write the test `src/account/AuthProvider.test.tsx`, using a fake client: states go from loading to anonymous to signed in, sign-out clears the session, and an unavailable client gives anonymous
-- [ ] T018 [P] [US1] Write the test `src/components/AccountMenu.test.tsx`: it shows "Sign in" when anonymous, and the menu (Settings, Saved trips, Theme, Sign out) when signed in, and is keyboard-operable
-- [ ] T019 [P] [US1] Write the test `src/routes/SignIn.test.tsx`: email validation, the "check your email" state, entering the code, and expired code and rate-limit errors
-- [ ] T020 [P] [US1] Write the end-to-end test `e2e/account.spec.ts` "signs up and signs in with email code", reading the code through Mailpit
-- [ ] T021 [US1] Implement `src/account/AuthProvider.tsx` (`useAuth`)
-- [ ] T022 [US1] Implement `src/routes/SignIn.tsx` and `src/routes/AuthCallback.tsx`
-- [ ] T023 [US1] Implement `src/components/AccountMenu.tsx` and add it to the header in `src/App.tsx`, with styles in `src/styles.css`
-- [ ] T024 [US1] Add `supabase/templates/magic_link.html`, containing the link and the code, and reference it in `config.toml`
+- [x] T017 [P] [US1] Write the test `src/account/AuthProvider.test.tsx`, using a fake client: states go from loading to anonymous to signed in, sign-out clears the session, and an unavailable client gives anonymous
+- [x] T018 [P] [US1] Write the test `src/components/AccountMenu.test.tsx`: it shows "Sign in" when anonymous, and the menu (Settings, Saved trips, Theme, Sign out) when signed in, and is keyboard-operable
+- [x] T019 [P] [US1] Write the test `src/routes/SignIn.test.tsx`: email validation, the "check your email" state, entering the code, and expired code and rate-limit errors
+- [x] T020 [P] [US1] Write the end-to-end test `e2e/account.spec.ts` "signs up and signs in with email code", reading the code through Mailpit
+- [x] T021 [US1] Implement `src/account/AuthProvider.tsx` (`useAuth`)
+- [x] T022 [US1] Implement `src/routes/SignIn.tsx` and `src/routes/AuthCallback.tsx`
+- [x] T023 [US1] Implement `src/components/AccountMenu.tsx` and add it to the header in `src/App.tsx`, with styles in `src/styles.css`
+- [x] T024 [US1] Add `supabase/templates/magic_link.html`, containing the link and the code, and reference it in `config.toml`
 
 ---
 

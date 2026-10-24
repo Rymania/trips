@@ -3,3 +3,8 @@ dist
 coverage
 .DS_Store
 .env
+test-results
+playwright-report
+blob-report
+.env.*
+!.env.example
