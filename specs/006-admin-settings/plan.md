@@ -18,7 +18,7 @@ Authorization happens in Postgres. A `user_roles` table and the `is_admin()` fun
 
 ## Technical Context
 
-**Language/Version**: Same as 005: TypeScript 6 and React 19, Postgres 15, TypeScript Edge Functions on Deno 2
+**Language/Version**: Same as 005: TypeScript 6 and React 19, Postgres 17, TypeScript Edge Functions on Deno 2
 **Primary Dependencies**: New runtime dependencies are `@openfeature/web-sdk` and `@openfeature/react-sdk`. Postgres extensions `pg_cron` and `pg_trgm`, both available in Supabase. Email goes through the provider's HTTPS API (proposed: Resend), with no SDK
 **Storage**: Supabase Postgres (tables in data-model.md); `localStorage` for dismissed banners and the anonymous ID used for flag rollouts
 **Testing**: pgTAP (RLS, triggers, functions), Deno tests (Edge Functions), Vitest and Testing Library (provider, components), Playwright (admin user flows, banner, flags)

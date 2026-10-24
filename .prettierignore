@@ -6,3 +6,6 @@ package-lock.json
 .github
 specs
 .vscode
+test-results
+playwright-report
+supabase/.temp

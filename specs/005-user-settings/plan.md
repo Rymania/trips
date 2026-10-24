@@ -9,7 +9,7 @@ Add optional accounts so families keep their profile, family members, saved trip
 
 ## Technical Context
 
-**Language/Version**: TypeScript 6 (strict) and React 19 on the frontend; Postgres 15 SQL; TypeScript on Deno 2 for Edge Functions
+**Language/Version**: TypeScript 6 (strict) and React 19 on the frontend; Postgres 17 SQL; TypeScript on Deno 2 for Edge Functions
 **Primary Dependencies**: Existing: Vite 8, Leaflet. New: `@supabase/supabase-js@2`, and dev-only `@playwright/test` and the `supabase` CLI
 **Storage**: Supabase Postgres (tables described in data-model.md); `localStorage` for the device theme and the Supabase session
 **Testing**: Vitest and Testing Library (unit and component tests), pgTAP through `supabase test db` (RLS and constraints), Playwright (end-to-end)

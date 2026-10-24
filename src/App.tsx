@@ -1,4 +1,6 @@
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
+import { AuthProvider } from './account/AuthProvider';
+import { AccountMenu } from './components/AccountMenu';
 import { ActiveFilters } from './components/ActiveFilters';
 import { ActivityDetail } from './components/ActivityDetail';
 import { FilterPanel } from './components/FilterPanel';
@@ -8,8 +10,16 @@ import type { SortKey, ViewMode } from './domain/types';
 import { t } from './i18n';
 import { useActivities } from './useActivities';
 import { useFilters } from './useFilters';
+import { Link } from './routes/Link';
+import { useRoute, type RouteName } from './routes/useRoute';
 
 const MapView = lazy(() => import('./components/MapView'));
+const pages: Partial<Record<RouteName, React.LazyExoticComponent<() => React.JSX.Element>>> = {
+  signIn: lazy(() => import('./routes/SignIn')),
+  authCallback: lazy(() => import('./routes/AuthCallback')),
+  saved: lazy(() => import('./routes/Placeholder')),
+  settings: lazy(() => import('./routes/Placeholder')),
+};
 
 const SORTS: [SortKey, string][] = [
   ['distance', t.sortDistance],
@@ -27,7 +37,7 @@ function loadSaved(): string[] {
   }
 }
 
-export default function App() {
+function SearchPage() {
   const [filters, update] = useFilters();
   const { activities, failed, loading, error, reload } = useActivities();
   const [openId, setOpenId] = useState<string | null>(null);
@@ -52,13 +62,6 @@ export default function App() {
 
   return (
     <>
-      <a className="skip" href="#results">
-        {t.skipToResults}
-      </a>
-      <header className="top">
-        <h1>{t.appTitle}</h1>
-        <p>{t.tagline}</p>
-      </header>
       <div className="layout">
         <aside className="sidebar">
           <button
@@ -148,5 +151,50 @@ export default function App() {
         />
       )}
     </>
+  );
+}
+
+/** The page shell: header with the account menu, then the current route. */
+function Shell() {
+  const route = useRoute();
+  const Page = pages[route];
+  return (
+    <>
+      <a className="skip" href={Page ? '#main' : '#results'}>
+        {Page ? t.skipToContent : t.skipToResults}
+      </a>
+      <header className="top">
+        <div className="top__brand">
+          <h1>
+            <Link to="/">{t.appTitle}</Link>
+          </h1>
+          <p>{t.tagline}</p>
+        </div>
+        <AccountMenu />
+      </header>
+      {Page ? (
+        <main id="main" tabIndex={-1}>
+          <Suspense
+            fallback={
+              <p role="status" className="page skeleton skeleton--short">
+                {t.pageLoading}
+              </p>
+            }
+          >
+            <Page />
+          </Suspense>
+        </main>
+      ) : (
+        <SearchPage />
+      )}
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <Shell />
+    </AuthProvider>
   );
 }
