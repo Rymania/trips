@@ -1,0 +1,123 @@
+openapi: 3.1.0
+info:
+  title: Trips Edge Functions — user settings
+  version: 1.0.0
+  description: |
+    Supabase Edge Functions added by spec 005. All other user data access goes
+    straight to Postgres through supabase-js and is governed by RLS
+    (see rls-policies.md). Errors use the shared shape `Error`.
+servers:
+  - url: http://127.0.0.1:54321/functions/v1
+    description: Local Supabase stack
+  - url: https://{projectRef}.supabase.co/functions/v1
+    variables:
+      projectRef:
+        default: your-project-ref
+paths:
+  /delete-account:
+    post:
+      summary: Permanently delete the caller's account and all their data
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirmEmail]
+              properties:
+                confirmEmail:
+                  type: string
+                  format: email
+                  description: Must equal the caller's current email (case-insensitive).
+      responses:
+        '204':
+          description: Account deleted.
+        '400':
+          description: confirmEmail missing or does not match.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '401':
+          description: Missing or invalid access token.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /export-data:
+    get:
+      summary: Download everything Trips stores about the caller
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: JSON export (also sent with Content-Disposition attachment).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Export' }
+        '401':
+          description: Missing or invalid access token.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+  /unsubscribe:
+    get:
+      summary: One-click unsubscribe from a marketing topic (no sign-in)
+      parameters:
+        - { name: u, in: query, required: true, schema: { type: string, format: uuid } }
+        - { name: t, in: query, required: true, schema: { type: string, enum: [product_news, nearby_digest] } }
+        - name: s
+          in: query
+          required: true
+          description: hex HMAC-SHA256 of "u:t" with UNSUBSCRIBE_SIGNING_KEY
+          schema: { type: string, pattern: '^[0-9a-f]{64}$' }
+      responses:
+        '200':
+          description: Unsubscribed; returns a small HTML confirmation page.
+          content:
+            text/html: {}
+        '400':
+          description: Bad or tampered signature.
+          content:
+            text/html: {}
+    post:
+      summary: RFC 8058 List-Unsubscribe-Post one-click endpoint
+      parameters:
+        - { name: u, in: query, required: true, schema: { type: string, format: uuid } }
+        - { name: t, in: query, required: true, schema: { type: string, enum: [product_news, nearby_digest] } }
+        - { name: s, in: query, required: true, schema: { type: string, pattern: '^[0-9a-f]{64}$' } }
+      responses:
+        '204': { description: Unsubscribed. }
+        '400': { description: Bad or tampered signature. }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Supabase access token (JWT)
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string, example: confirm_email_mismatch }
+            message: { type: string }
+    Export:
+      type: object
+      required: [exportedAt, account, profile, familyMembers, savedTrips, contactPreferences]
+      properties:
+        exportedAt: { type: string, format: date-time }
+        account:
+          type: object
+          properties:
+            email: { type: string, format: email }
+            createdAt: { type: string, format: date-time }
+            lastSignInAt: { type: [string, 'null'], format: date-time }
+        profile: { type: object }
+        familyMembers: { type: array, items: { type: object } }
+        savedTrips: { type: array, items: { type: object } }
+        contactPreferences: { type: array, items: { type: object } }
