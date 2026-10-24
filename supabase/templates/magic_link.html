@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <body
+    style="
+      margin: 0;
+      padding: 24px;
+      background: #faf6f0;
+      color: #2e3230;
+      font-family: 'Nunito Sans', system-ui, sans-serif;
+      line-height: 1.6;
+    "
+  >
+    <div
+      style="
+        max-width: 480px;
+        margin: 0 auto;
+        background: #f3ede3;
+        border-radius: 12px;
+        padding: 24px;
+      "
+    >
+      <h1
+        style="
+          font-family: Literata, Georgia, serif;
+          color: #3d6a4b;
+          font-size: 22px;
+          margin: 0 0 12px;
+        "
+      >
+        Sign in to Family Day Planner
+      </h1>
+      <p style="margin: 0 0 16px">Your sign-in code is:</p>
+      <p
+        style="
+          font-size: 28px;
+          font-weight: 700;
+          letter-spacing: 0.2em;
+          margin: 0 0 16px;
+          color: #2e3230;
+        "
+      >
+        {{ .Token }}
+      </p>
+      <p style="margin: 0 0 16px">
+        Enter it on the sign-in page, or use this button on the device where you asked to sign in:
+      </p>
+      <p style="margin: 0 0 20px">
+        <a
+          href="{{ .ConfirmationURL }}"
+          style="
+            display: inline-block;
+            background: #4a7c59;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            padding: 12px 20px;
+            border-radius: 12px;
+          "
+          >Sign in</a
+        >
+      </p>
+      <p style="margin: 0; font-size: 14px; color: #5c5f55">
+        The code and link expire in 10 minutes. If you didn't ask to sign in, you can ignore this
+        email.
+      </p>
+    </div>
+  </body>
+</html>

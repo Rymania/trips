@@ -4,6 +4,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+# Public Supabase settings baked into the bundle; empty means accounts are off.
+ARG VITE_SUPABASE_URL=
+ARG VITE_SUPABASE_PUBLISHABLE_KEY=
 RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:1.30-alpine-slim

@@ -7,3 +7,10 @@ coverage
 .vscode
 specs
 *.md
+.env
+.env.*
+!.env.example
+supabase
+e2e
+test-results
+playwright-report
