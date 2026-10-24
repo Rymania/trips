@@ -115,7 +115,7 @@ export default function App() {
           {error ? (
             <div role="alert" className="banner">
               <p>{t.fatalError}</p>
-              <button type="button" className="btn" onClick={reload}>
+              <button type="button" className="btn btn-primary" onClick={reload}>
                 {t.retry}
               </button>
             </div>

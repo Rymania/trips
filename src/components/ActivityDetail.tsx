@@ -105,7 +105,7 @@ export function ActivityDetail({
         <dd>{a.sourceName}</dd>
       </dl>
       <p className="actions">
-        <a className="btn" href={directions} target="_blank" rel="noopener noreferrer">
+        <a className="btn btn-primary" href={directions} target="_blank" rel="noopener noreferrer">
           {t.directions}
         </a>
         {web && (
