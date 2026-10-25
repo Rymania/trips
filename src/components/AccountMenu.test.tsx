@@ -122,7 +122,7 @@ describe('AccountMenu', () => {
       profile: { profile: profile({ displayName: 'Sam Rivers' }) },
     });
     const toggle = screen.getByRole('button', { name: 'Account menu for Sam Rivers' });
-    expect(toggle).toHaveTextContent('SSam Rivers');
+    expect(toggle.querySelector('.account-pill__email')).toHaveTextContent('Sam Rivers');
     await user.click(toggle);
     expect(screen.getByText('Signed in as sam@trips.test')).toBeInTheDocument();
   });

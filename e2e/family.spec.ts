@@ -27,14 +27,20 @@ test('family members set the search’s default filters (US3)', async ({ page })
   await expect(page.getByText(summary)).toBeVisible();
 
   // Reorder, and it sticks.
+  // Moving swaps two positions: wait for both writes before reloading, which would cut them off.
+  let patched = 0;
+  const reordered = page.waitForResponse(
+    (r) =>
+      r.request().method() === 'PATCH' &&
+      r.url().includes('/rest/v1/family_members') &&
+      ++patched === 2,
+  );
   await page.getByRole('button', { name: 'Move Rex up' }).click();
   const names = page.locator('.family-list__name');
   await expect(names).toHaveText(['Sam', 'Rex', 'Robin']);
-  // The screen updates before the database does, so reload until the write lands.
-  await expect(async () => {
-    await page.reload();
-    await expect(names).toHaveText(['Sam', 'Rex', 'Robin'], { timeout: 1_000 });
-  }).toPass({ timeout: 10_000 });
+  await reordered;
+  await page.reload();
+  await expect(names).toHaveText(['Sam', 'Rex', 'Robin']);
 
   // A search with no filters in the URL starts from the family.
   await page.goto('/');

@@ -27,7 +27,9 @@ test('downloads only the signed-in user’s data (US7)', async ({ browser }) => 
   await addAdult(page, 'Robin');
   await page.goto('/');
   await page.getByRole('button', { name: 'Natural History Museum', exact: true }).click();
-  const saved = page.waitForResponse((r) => r.url().includes('/rest/v1/saved_trips'));
+  const saved = page.waitForResponse(
+    (r) => r.request().method() === 'POST' && r.url().includes('/rest/v1/saved_trips'),
+  );
   await page.getByRole('button', { name: /Save for later/ }).click();
   await saved;
 

@@ -55,7 +55,8 @@ function Menu({
   button,
   children,
 }: {
-  label: string;
+  /** For an icon-only button; otherwise the button's own text names it. */
+  label?: string;
   buttonClass: string;
   button: ReactNode;
   children: (close: () => void) => ReactNode;
@@ -127,13 +128,15 @@ function SignedInMenu({
 
   return (
     <Menu
-      label={t.accountMenu(name)}
       buttonClass="btn account-pill"
       button={
+        // Named by its text (WCAG 2.5.3 Label in Name): "Account menu for <name>",
+        // with only the name visible.
         <>
           <span className="avatar" aria-hidden="true">
             {name.charAt(0).toUpperCase()}
           </span>
+          <span className="visually-hidden">{t.accountMenuFor}</span>{' '}
           <span className="account-pill__email">{name}</span>
         </>
       }

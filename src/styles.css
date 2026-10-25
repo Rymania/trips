@@ -970,8 +970,15 @@ dd {
   margin-bottom: 0.4rem;
 }
 @media (max-width: 480px) {
+  /* Hidden visually but kept in the button's accessible name. */
   .account-pill__email {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 
