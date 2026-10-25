@@ -14,6 +14,10 @@ export interface ProfileApi {
   saveTheme: (theme: ThemePreference) => Promise<boolean>;
   /** Emails a confirmation link to the new address (spec 005 US4 scenario 3). */
   changeEmail: (email: string) => Promise<AuthResult>;
+  /** Everything stored about the user, as JSON (spec 005 US7). */
+  exportData: () => Promise<{ ok: true; data: unknown } | { ok: false }>;
+  /** Permanently deletes the account; the caller then signs out. */
+  deleteAccount: (confirmEmail: string) => Promise<'deleted' | 'mismatch' | 'failed'>;
   reload: () => void;
 }
 
@@ -87,8 +91,40 @@ export function useProfileState(
     [ready],
   );
 
+  const exportData = useCallback(async () => {
+    const r = (await ready())?.repo;
+    if (!r) return { ok: false as const };
+    try {
+      return { ok: true as const, data: await r.exportData() };
+    } catch {
+      return { ok: false as const };
+    }
+  }, [ready]);
+
+  const deleteAccount = useCallback(
+    async (confirmEmail: string) => {
+      const r = (await ready())?.repo;
+      if (!r) return 'failed' as const;
+      try {
+        return await r.deleteAccount(confirmEmail);
+      } catch {
+        return 'failed' as const;
+      }
+    },
+    [ready],
+  );
+
   return useMemo(
-    () => ({ status, profile: data, save, saveTheme, changeEmail, reload }),
-    [status, data, save, saveTheme, changeEmail, reload],
+    () => ({
+      status,
+      profile: data,
+      save,
+      saveTheme,
+      changeEmail,
+      exportData,
+      deleteAccount,
+      reload,
+    }),
+    [status, data, save, saveTheme, changeEmail, exportData, deleteAccount, reload],
   );
 }

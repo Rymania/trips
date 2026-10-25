@@ -13,6 +13,7 @@ import { t } from './i18n';
 import { useActivities } from './useActivities';
 import { useFilters } from './useFilters';
 import { Link } from './routes/Link';
+import { Notice } from './routes/notice';
 import { useRoute, type RouteName } from './routes/useRoute';
 
 const MapView = lazy(() => import('./components/MapView'));
@@ -186,6 +187,7 @@ function Shell() {
         </div>
         <AccountMenu />
       </header>
+      <Notice />
       {Page ? (
         <main id="main" tabIndex={-1}>
           <Suspense

@@ -215,4 +215,23 @@ export const en = {
   addHome: 'Add a home location',
   contactFailed: 'We couldn’t save your email choices. Please try again.',
   contactLoadFailed: 'We couldn’t load your email choices.',
+
+  // Your data (spec 005 US7)
+  yourData: 'Your data',
+  downloadIntro:
+    'Download a copy of everything Family Day Planner stores about you: your account, profile, family, saved trips and email choices.',
+  downloadData: 'Download my data',
+  preparingDownload: 'Preparing…',
+  downloadFailed: 'We couldn’t prepare your download. Please try again.',
+  deleteTitle: 'Delete my account',
+  deleteIntro:
+    'This permanently deletes your account and everything in it, including your family and saved trips. It can’t be undone.',
+  deleteStart: 'Delete my account…',
+  deleteConfirmLabel: 'Type your email address to confirm',
+  deleteMismatch: (email: string) => `Type ${email} exactly to confirm.`,
+  deleteConfirm: 'Delete my account permanently',
+  deleting: 'Deleting…',
+  deleteFailed: 'We couldn’t delete your account. Please try again.',
+  accountDeleted: 'Your account and everything in it have been deleted.',
+  dismiss: 'Dismiss',
 } as const;

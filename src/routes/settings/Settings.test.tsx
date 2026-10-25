@@ -39,5 +39,6 @@ describe('Settings', () => {
       'href',
       '#contact',
     );
+    expect(screen.getByRole('link', { name: 'Your data' })).toHaveAttribute('href', '#data');
   });
 });
