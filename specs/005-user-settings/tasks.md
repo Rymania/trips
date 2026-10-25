@@ -117,9 +117,9 @@ description: 'Task list for 005 User Settings'
 
 ## Phase 10: Polish
 
-- [ ] T053 [P] Run axe accessibility checks in Playwright on `/sign-in`, `/saved` and `/settings`, at 320, 768, 1024 and 1440 px
-- [ ] T054 [P] Add a "Local Supabase" section to the README, covering env vars and Mailpit
-- [ ] T055 Go through quickstart.md end to end, and confirm the bundle size check, the coverage threshold of at least 85% for `src/domain` and `src/account`, and that all CI jobs are green
+- [x] T053 [P] Run axe accessibility checks in Playwright on `/sign-in`, `/saved` and `/settings`, at 320, 768, 1024 and 1440 px
+- [x] T054 [P] Add a "Local Supabase" section to the README, covering env vars and Mailpit
+- [x] T055 Go through quickstart.md end to end, and confirm the bundle size check, the coverage threshold of at least 85% for `src/domain` and `src/account`, and that all CI jobs are green
 
 ## Dependencies
 

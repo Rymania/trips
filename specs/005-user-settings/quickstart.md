@@ -1,11 +1,11 @@
 # Quickstart: User Settings (005)
 
-How to run and check this feature locally once it's implemented.
+How to run and check this feature locally. The README's "Local Supabase" section has the same steps in short, plus what production needs.
 
 ## Prerequisites
 
 - Docker Desktop running
-- The Supabase CLI. It's installed as a dev dependency, so use `npx supabase …`.
+- The Supabase CLI and Deno. `npm install` installs both, so use `npx supabase …` and `npx deno …`.
 
 ## 1. Start the local Supabase stack
 
@@ -43,9 +43,10 @@ Emails sent by the local stack, including sign-in links and codes, appear in Mai
 
 ```bash
 npm run check               # lint, format, typecheck, unit tests
+npm run test:coverage       # fails below 85% for src/domain and src/account
 npx supabase test db        # RLS and constraint tests (pgTAP)
 npm run functions:check     # Edge Functions: Deno lint, type check and tests
-npm run e2e                 # Playwright against the local stack
+npm run e2e                 # Playwright against the local stack, incl. axe at 320–1440px
 ```
 
 ## Docker

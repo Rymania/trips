@@ -2,7 +2,7 @@
 
 **Feature Branch**: `005-user-settings`
 **Created**: 2026-10-24
-**Status**: Draft
+**Status**: Implemented
 **Input**: GitHub issue [Rymania/trips#7](https://github.com/Rymania/trips/issues/7): "The ability for users to manage their profile, including: user information, contact preferences, dark mode preferences, saved trips, family members."
 
 ## Context

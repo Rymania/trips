@@ -77,7 +77,7 @@ export const en = {
   signIn: 'Sign in',
   signOut: 'Sign out',
   account: 'Account',
-  accountMenu: (name: string) => `Account menu for ${name}`,
+  accountMenuFor: 'Account menu for',
   accountLoading: 'Loading your account…',
   settings: 'Settings',
   savedTrips: 'Saved trips',

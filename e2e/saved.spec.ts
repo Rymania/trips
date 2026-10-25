@@ -43,7 +43,11 @@ test('a saved trip appears on a second browser context (US2)', async ({ browser 
   await expect(mirrored.getByLabel('Note')).toHaveValue('Bring the dinosaur book');
 
   // Removing it on one device removes it everywhere.
+  const removed = first.waitForResponse(
+    (r) => r.request().method() === 'DELETE' && r.url().includes('/rest/v1/saved_trips'),
+  );
   await mirrored.getByRole('button', { name: `Remove ${MUSEUM}` }).click();
+  await removed; // the screen updates before the database does
   await expect(first.getByText(/haven’t saved any activities yet/)).toBeVisible();
   await second.reload();
   await expect(second.getByText(/haven’t saved any activities yet/)).toBeVisible();
