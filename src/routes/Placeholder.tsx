@@ -1,7 +1,7 @@
 import { t } from '../i18n';
 import { Link } from './Link';
 
-/** Stands in for Saved trips (US2) and Settings (US4) until they land. */
+/** Stands in for Settings (US4) until it lands. */
 export default function Placeholder() {
   return (
     <section className="page narrow card form-card" aria-labelledby="soon-title">

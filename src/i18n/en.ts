@@ -108,4 +108,26 @@ export const en = {
   callbackFailed: 'This sign-in link has expired or was already used.',
   requestNewLink: 'Request a new code',
   signedInAs: (email: string) => `Signed in as ${email}`,
+
+  // Saved trips (spec 005 US2)
+  keepSaved: 'Saved for this visit only.',
+  keepSavedLink: 'Sign in to keep it',
+  saveFailed: 'We couldn’t update your saved trips. Please try again.',
+  savedSignedOut: 'Sign in to keep the activities you save and see them on any device.',
+  savedLoadFailed: 'We couldn’t load your saved trips.',
+  savedEmpty:
+    'You haven’t saved any activities yet. Open one from the search and choose “Save for later”.',
+  savedOn: (date: string) => `Saved ${date}`,
+  plannedFor: (date: string) => `Planned for ${date}`,
+  plannedDate: 'Planned date',
+  note: 'Note',
+  noteCount: (n: number) => `${n} of 500 characters`,
+  saveChanges: 'Save changes',
+  savingChanges: 'Saving…',
+  changesSaved: 'Changes saved',
+  changesFailed: 'We couldn’t save your changes. Please try again.',
+  removeSaved: 'Remove',
+  removeSavedNamed: (name: string) => `Remove ${name}`,
+  removeFailed: 'We couldn’t remove this trip. Please try again.',
+  noLongerAvailable: 'No longer available',
 } as const;
