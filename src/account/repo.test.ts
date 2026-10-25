@@ -153,6 +153,19 @@ describe('repo: profile', () => {
     ]);
   });
 
+  it('saves the theme on its own', async () => {
+    const { client, calls } = fakeClient();
+    await createRepo(client).updateTheme('user-1', 'dark');
+    expect(calls).toEqual([
+      ['update', [{ theme: 'dark' }]],
+      ['eq', ['id', 'user-1']],
+    ]);
+    const error = { message: 'nope' };
+    await expect(createRepo(fakeClient({ error }).client).updateTheme('u', 'light')).rejects.toBe(
+      error,
+    );
+  });
+
   it('asks Auth to change the email, confirming through the callback page', async () => {
     const { client, auth } = fakeClient();
     await createRepo(client).changeEmail('new@trips.test', 'https://trips.test/auth/callback');

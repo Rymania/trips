@@ -126,4 +126,35 @@ describe('AccountMenu', () => {
     await user.click(toggle);
     expect(screen.getByText('Signed in as sam@trips.test')).toBeInTheDocument();
   });
+
+  it('lets anonymous visitors choose a theme from the header', async () => {
+    const user = userEvent.setup();
+    const { theme } = renderWithAccount(<AccountMenu />, { auth: { status: 'anonymous' } });
+    const toggle = screen.getByRole('button', { name: 'Theme' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await user.click(toggle);
+    expect(screen.getByRole('radio', { name: 'Match my device' })).toBeChecked();
+    await user.click(screen.getByRole('radio', { name: 'Dark' }));
+    expect(theme.setPreference).toHaveBeenCalledWith('dark');
+    await user.keyboard('{Escape}');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveFocus();
+  });
+
+  it('offers the theme even when accounts are off', () => {
+    renderWithAccount(<AccountMenu />, { auth: { status: 'disabled' } });
+    expect(screen.getByRole('button', { name: 'Theme' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
+  });
+
+  it('includes the theme in the signed-in menu', async () => {
+    const user = userEvent.setup();
+    const { theme } = renderWithAccount(<AccountMenu />, { theme: { preference: 'light' } });
+    await user.click(screen.getByRole('button', { name: /Account menu/ }));
+    expect(screen.getByRole('group', { name: 'Theme' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked();
+    await user.click(screen.getByRole('radio', { name: 'Match my device' }));
+    expect(theme.setPreference).toHaveBeenCalledWith('system');
+    expect(screen.queryByRole('button', { name: 'Theme' })).not.toBeInTheDocument();
+  });
 });

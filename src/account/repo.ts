@@ -107,6 +107,10 @@ export function createRepo(client: TripsClient) {
       );
     },
 
+    async updateTheme(id: string, theme: ThemePreference): Promise<void> {
+      check(await client.from('profiles').update({ theme }).eq('id', id));
+    },
+
     /** Auth emails the new address; the change applies once that link is followed. */
     async changeEmail(email: string, redirectTo: string): Promise<void> {
       const { error } = await client.auth.updateUser({ email }, { emailRedirectTo: redirectTo });

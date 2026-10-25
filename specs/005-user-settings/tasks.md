@@ -90,10 +90,10 @@ description: 'Task list for 005 User Settings'
 
 ## Phase 7: US5, theme (P3)
 
-- [ ] T041 [P] [US5] Write the test `src/account/theme.test.ts`: how `system`, `light` and `dark` resolve, localStorage being saved, and storage that throws
-- [ ] T042 [P] [US5] Add the end-to-end test "dark theme persists with no flash", checking that the computed `--bg` at `DOMContentLoaded` is the dark value
-- [ ] T043 [US5] Implement `theme.ts`, add the inline pre-paint script to `index.html`, and add the `data-theme` token blocks to `styles.css`
-- [ ] T044 [US5] Implement `AppearanceSection.tsx` and the theme switch in `AccountMenu`, saving to the profile when signed in
+- [x] T041 [P] [US5] Write the test `src/account/theme.test.ts`: how `system`, `light` and `dark` resolve, localStorage being saved, and storage that throws
+- [x] T042 [P] [US5] Add the end-to-end test "dark theme persists with no flash", checking that the computed `--bg` at `DOMContentLoaded` is the dark value
+- [x] T043 [US5] Implement `theme.ts`, add the inline pre-paint script to `index.html`, and add the `data-theme` token blocks to `styles.css`
+- [x] T044 [US5] Implement `AppearanceSection.tsx` and the theme switch in `AccountMenu`, saving to the profile when signed in
 
 ---
 

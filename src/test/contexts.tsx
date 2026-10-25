@@ -6,9 +6,11 @@ import {
   FamilyContext,
   ProfileContext,
   SavedContext,
+  ThemeContext,
   type FamilyApi,
   type ProfileApi,
   type SavedApi,
+  type ThemeApi,
 } from '../account/ProfileProvider';
 import type { FamilyMember, Profile } from '../account/types';
 
@@ -64,6 +66,7 @@ export function profileApi(over: Partial<ProfileApi> = {}): ProfileApi {
     status: 'ready',
     profile: profile(),
     save: vi.fn(async () => true),
+    saveTheme: vi.fn(async () => true),
     changeEmail: vi.fn(async () => ({ ok: true as const })),
     reload: vi.fn(),
     ...over,
@@ -83,6 +86,10 @@ export function familyApi(over: Partial<FamilyApi> = {}): FamilyApi {
   };
 }
 
+export function themeApi(over: Partial<ThemeApi> = {}): ThemeApi {
+  return { preference: 'system', setPreference: vi.fn(async () => true), ...over };
+}
+
 /** Renders `ui` inside the account contexts, with fakes for anything not given. */
 export function renderWithAccount(
   ui: ReactElement,
@@ -91,11 +98,13 @@ export function renderWithAccount(
     saved = {},
     profile: prof = {},
     family = {},
+    theme = {},
   }: {
     auth?: AuthState;
     saved?: Partial<SavedApi>;
     profile?: Partial<ProfileApi>;
     family?: Partial<FamilyApi>;
+    theme?: Partial<ThemeApi>;
   } = {},
 ) {
   const apis = {
@@ -103,12 +112,15 @@ export function renderWithAccount(
     saved: savedApi(saved),
     profile: profileApi(prof),
     family: familyApi(family),
+    theme: themeApi(theme),
   };
   const view = render(
     <AuthContext.Provider value={apis.auth}>
       <ProfileContext.Provider value={apis.profile}>
         <FamilyContext.Provider value={apis.family}>
-          <SavedContext.Provider value={apis.saved}>{ui}</SavedContext.Provider>
+          <ThemeContext.Provider value={apis.theme}>
+            <SavedContext.Provider value={apis.saved}>{ui}</SavedContext.Provider>
+          </ThemeContext.Provider>
         </FamilyContext.Provider>
       </ProfileContext.Provider>
     </AuthContext.Provider>,

@@ -187,4 +187,14 @@ export const en = {
   birthHint: 'Only the month and year are stored, to work out their age group.',
   birthInvalid: 'Choose a birth month and a year from 1900 to now.',
   childDetails: (born: string, age: number) => `Child · born ${born} · age ${age}`,
+
+  // Theme (spec 005 US5)
+  theme: 'Theme',
+  themeSystem: 'Match my device',
+  themeLight: 'Light',
+  themeDark: 'Dark',
+  appearance: 'Appearance',
+  appearanceIntro:
+    'Choose how the app looks. When you’re signed in, your choice follows you to your other devices.',
+  themeSaveFailed: 'We couldn’t save your theme to your account. Please try again.',
 } as const;

@@ -55,7 +55,11 @@ test('family members set the search’s default filters (US3)', async ({ page })
 
   // Editing and removing change the next search.
   await page.goto('/settings#family');
+  const deleted = page.waitForResponse(
+    (r) => r.request().method() === 'DELETE' && r.url().includes('/rest/v1/family_members'),
+  );
   await page.getByRole('button', { name: 'Remove Rex' }).click();
+  await deleted; // the screen updates first; leaving now could cut the request off
   await expect(page.getByRole('button', { name: 'Edit Rex' })).toHaveCount(0);
   await page.goto('/');
   await expect(page.getByRole('checkbox', { name: '4–7' })).toBeChecked();
