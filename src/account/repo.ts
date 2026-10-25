@@ -1,6 +1,9 @@
 import type { TripsClient } from './client';
 import type { Database } from './database.types';
 import type {
+  FamilyMember,
+  MemberInput,
+  MemberKind,
   Profile,
   ProfilePatch,
   SavedPatch,
@@ -24,7 +27,31 @@ type ProfileRow = Pick<
   'id' | 'display_name' | 'home_place_name' | 'home_lat' | 'home_lng' | 'theme'
 >;
 
+type MemberRow = Pick<
+  Database['public']['Tables']['family_members']['Row'],
+  'id' | 'nickname' | 'kind' | 'birth_year' | 'birth_month' | 'sort_order'
+>;
+
 const NAME_MAX = 200;
+const MEMBER_COLUMNS = 'id, nickname, kind, birth_year, birth_month, sort_order';
+
+const toMember = (r: MemberRow): FamilyMember => ({
+  id: r.id,
+  nickname: r.nickname,
+  kind: r.kind as MemberKind,
+  birth:
+    r.birth_year !== null && r.birth_month !== null
+      ? { year: r.birth_year, month: r.birth_month }
+      : null,
+  sortOrder: r.sort_order,
+});
+
+const memberColumns = ({ nickname, kind, birth }: MemberInput) => ({
+  nickname,
+  kind,
+  birth_year: birth?.year ?? null,
+  birth_month: birth?.month ?? null,
+});
 
 const toProfile = (r: ProfileRow): Profile => ({
   id: r.id,
@@ -52,6 +79,7 @@ function check<T>({ data, error }: { data: T; error: unknown }): T {
 
 export function createRepo(client: TripsClient) {
   const saved = () => client.from('saved_trips');
+  const family = () => client.from('family_members');
   return {
     async getProfile(id: string): Promise<Profile> {
       const row = check(
@@ -83,6 +111,43 @@ export function createRepo(client: TripsClient) {
     async changeEmail(email: string, redirectTo: string): Promise<void> {
       const { error } = await client.auth.updateUser({ email }, { emailRedirectTo: redirectTo });
       if (error) throw error;
+    },
+
+    async listFamily(): Promise<FamilyMember[]> {
+      const rows = check(
+        await family()
+          .select(MEMBER_COLUMNS)
+          .order('sort_order', { ascending: true })
+          .order('created_at', { ascending: true }),
+      );
+      return (rows ?? []).map(toMember);
+    },
+
+    /** Adds a member; the database caps a family at 20 (data-model.md). */
+    async addMember(profileId: string, m: MemberInput, sortOrder: number): Promise<FamilyMember> {
+      const row = check(
+        await family()
+          .insert({ profile_id: profileId, ...memberColumns(m), sort_order: sortOrder })
+          .select(MEMBER_COLUMNS)
+          .single(),
+      );
+      if (!row) throw new Error('Family member not returned');
+      return toMember(row);
+    },
+
+    async updateMember(id: string, m: MemberInput): Promise<void> {
+      check(await family().update(memberColumns(m)).eq('id', id));
+    },
+
+    async removeMember(id: string): Promise<void> {
+      check(await family().delete().eq('id', id));
+    },
+
+    async reorderFamily(order: { id: string; sortOrder: number }[]): Promise<void> {
+      const results = await Promise.all(
+        order.map(({ id, sortOrder }) => family().update({ sort_order: sortOrder }).eq('id', id)),
+      );
+      results.forEach(check);
     },
 
     async listSaved(): Promise<SavedTrip[]> {

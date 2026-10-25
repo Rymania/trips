@@ -12,7 +12,7 @@ function fakeClient(result: { data?: unknown; error?: unknown } = {}) {
     then: (resolve: (v: typeof settled) => unknown, reject: (e: unknown) => unknown) =>
       Promise.resolve(settled).then(resolve, reject),
   };
-  for (const m of ['select', 'order', 'upsert', 'update', 'delete', 'eq', 'single']) {
+  for (const m of ['select', 'order', 'insert', 'upsert', 'update', 'delete', 'eq', 'single']) {
     builder[m] = (...args: unknown[]) => {
       calls.push([m, args]);
       return builder;
@@ -168,5 +168,106 @@ describe('repo: profile', () => {
     await expect(repo.getProfile('u')).rejects.toBe(error);
     await expect(repo.updateProfile('u', { displayName: 'x', home: null })).rejects.toBe(error);
     await expect(repo.changeEmail('a@b.c', '/')).rejects.toBe(error);
+  });
+});
+
+describe('repo: family', () => {
+  const COLUMNS = 'id, nickname, kind, birth_year, birth_month, sort_order';
+  const childRow = {
+    id: 'm1',
+    nickname: 'Robin',
+    kind: 'child',
+    birth_year: 2019,
+    birth_month: 3,
+    sort_order: 2,
+  };
+  const robin = {
+    id: 'm1',
+    nickname: 'Robin',
+    kind: 'child',
+    birth: { year: 2019, month: 3 },
+    sortOrder: 2,
+  };
+
+  it('lists members in their saved order', async () => {
+    const { client, from, calls } = fakeClient({
+      data: [childRow, { ...childRow, id: 'm2', kind: 'dog', birth_year: null, birth_month: null }],
+    });
+    const members = await createRepo(client).listFamily();
+    expect(from).toHaveBeenCalledWith('family_members');
+    expect(calls).toEqual([
+      ['select', [COLUMNS]],
+      ['order', ['sort_order', { ascending: true }]],
+      ['order', ['created_at', { ascending: true }]],
+    ]);
+    expect(members).toEqual([robin, { ...robin, id: 'm2', kind: 'dog', birth: null }]);
+  });
+
+  it('adds a member and returns it as stored', async () => {
+    const { client, calls } = fakeClient({ data: childRow });
+    const added = await createRepo(client).addMember(
+      'user-1',
+      { nickname: 'Robin', kind: 'child', birth: { year: 2019, month: 3 } },
+      2,
+    );
+    expect(added).toEqual(robin);
+    expect(calls).toEqual([
+      [
+        'insert',
+        [
+          {
+            profile_id: 'user-1',
+            nickname: 'Robin',
+            kind: 'child',
+            birth_year: 2019,
+            birth_month: 3,
+            sort_order: 2,
+          },
+        ],
+      ],
+      ['select', [COLUMNS]],
+      ['single', []],
+    ]);
+  });
+
+  it('updates and removes a member', async () => {
+    const { client, calls } = fakeClient();
+    const repo = createRepo(client);
+    await repo.updateMember('m1', { nickname: 'Rex', kind: 'dog', birth: null });
+    await repo.removeMember('m1');
+    expect(calls).toEqual([
+      ['update', [{ nickname: 'Rex', kind: 'dog', birth_year: null, birth_month: null }]],
+      ['eq', ['id', 'm1']],
+      ['delete', []],
+      ['eq', ['id', 'm1']],
+    ]);
+  });
+
+  it('saves a new order', async () => {
+    const { client, calls } = fakeClient();
+    await createRepo(client).reorderFamily([
+      { id: 'm1', sortOrder: 1 },
+      { id: 'm2', sortOrder: 0 },
+    ]);
+    expect(calls).toEqual([
+      ['update', [{ sort_order: 1 }]],
+      ['eq', ['id', 'm1']],
+      ['update', [{ sort_order: 0 }]],
+      ['eq', ['id', 'm2']],
+    ]);
+  });
+
+  it('throws family errors', async () => {
+    const error = { message: 'A family can have at most 20 members', code: 'P0001' };
+    const repo = createRepo(fakeClient({ error }).client);
+    await expect(repo.listFamily()).rejects.toBe(error);
+    await expect(
+      repo.addMember('u', { nickname: 'x', kind: 'adult', birth: null }, 0),
+    ).rejects.toBe(error);
+    await expect(
+      repo.updateMember('m', { nickname: 'x', kind: 'adult', birth: null }),
+    ).rejects.toBe(error);
+    await expect(repo.removeMember('m')).rejects.toBe(error);
+    await expect(repo.reorderFamily([{ id: 'm', sortOrder: 0 }])).rejects.toBe(error);
   });
 });

@@ -84,5 +84,5 @@ export function useAccountData<T>(
     [setData],
   );
 
-  return { status, data, repo, reload, optimistic };
+  return { status, data, repo, reload, optimistic, setData };
 }

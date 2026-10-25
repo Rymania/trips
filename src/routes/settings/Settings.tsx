@@ -1,10 +1,14 @@
 import { useAuth } from '../../account/AuthProvider';
 import { t } from '../../i18n';
 import { SignInRequired } from '../SignInRequired';
+import { FamilySection } from './FamilySection';
 import { ProfileSection } from './ProfileSection';
 
-/** Sections in page order; later stories add Family, Contact, Appearance and Your data. */
-const SECTIONS = [{ id: 'profile', label: t.profile, Section: ProfileSection }];
+/** Sections in page order; later stories add Contact, Appearance and Your data. */
+const SECTIONS = [
+  { id: 'profile', label: t.profile, Section: ProfileSection },
+  { id: 'family', label: t.family, Section: FamilySection },
+];
 
 /** Settings page (spec 005 FR-004): only available when signed in. */
 export default function Settings() {

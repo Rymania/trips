@@ -3,12 +3,14 @@ import type { ReactElement } from 'react';
 import { vi } from 'vitest';
 import { AuthContext, type AuthApi, type AuthState } from '../account/AuthProvider';
 import {
+  FamilyContext,
   ProfileContext,
   SavedContext,
+  type FamilyApi,
   type ProfileApi,
   type SavedApi,
 } from '../account/ProfileProvider';
-import type { Profile } from '../account/types';
+import type { FamilyMember, Profile } from '../account/types';
 
 export const signedIn = (email = 'sam@trips.test', id = 'user-1'): AuthState => ({
   status: 'signedIn',
@@ -20,6 +22,15 @@ export const profile = (over: Partial<Profile> = {}): Profile => ({
   displayName: null,
   home: null,
   theme: 'system',
+  ...over,
+});
+
+export const member = (over: Partial<FamilyMember> = {}): FamilyMember => ({
+  id: 'm1',
+  nickname: 'Sam',
+  kind: 'adult',
+  birth: null,
+  sortOrder: 0,
   ...over,
 });
 
@@ -59,6 +70,19 @@ export function profileApi(over: Partial<ProfileApi> = {}): ProfileApi {
   };
 }
 
+export function familyApi(over: Partial<FamilyApi> = {}): FamilyApi {
+  return {
+    status: 'ready',
+    members: [],
+    add: vi.fn(async () => true),
+    update: vi.fn(async () => true),
+    remove: vi.fn(async () => true),
+    move: vi.fn(async () => true),
+    reload: vi.fn(),
+    ...over,
+  };
+}
+
 /** Renders `ui` inside the account contexts, with fakes for anything not given. */
 export function renderWithAccount(
   ui: ReactElement,
@@ -66,13 +90,26 @@ export function renderWithAccount(
     auth = signedIn(),
     saved = {},
     profile: prof = {},
-  }: { auth?: AuthState; saved?: Partial<SavedApi>; profile?: Partial<ProfileApi> } = {},
+    family = {},
+  }: {
+    auth?: AuthState;
+    saved?: Partial<SavedApi>;
+    profile?: Partial<ProfileApi>;
+    family?: Partial<FamilyApi>;
+  } = {},
 ) {
-  const apis = { auth: authApi(auth), saved: savedApi(saved), profile: profileApi(prof) };
+  const apis = {
+    auth: authApi(auth),
+    saved: savedApi(saved),
+    profile: profileApi(prof),
+    family: familyApi(family),
+  };
   const view = render(
     <AuthContext.Provider value={apis.auth}>
       <ProfileContext.Provider value={apis.profile}>
-        <SavedContext.Provider value={apis.saved}>{ui}</SavedContext.Provider>
+        <FamilyContext.Provider value={apis.family}>
+          <SavedContext.Provider value={apis.saved}>{ui}</SavedContext.Provider>
+        </FamilyContext.Provider>
       </ProfileContext.Provider>
     </AuthContext.Provider>,
   );

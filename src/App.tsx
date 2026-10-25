@@ -1,11 +1,12 @@
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 import { AuthProvider, useAuth } from './account/AuthProvider';
-import { ProfileProvider, useProfile, useSaved } from './account/ProfileProvider';
+import { ProfileProvider, useFamily, useProfile, useSaved } from './account/ProfileProvider';
 import { AccountMenu } from './components/AccountMenu';
 import { ActiveFilters } from './components/ActiveFilters';
 import { ActivityDetail } from './components/ActivityDetail';
 import { FilterPanel } from './components/FilterPanel';
 import { ResultsList } from './components/ResultsList';
+import { familyDefaults } from './domain/family';
 import { applyFilters } from './domain/filters';
 import type { Activity, Filters, SortKey, ViewMode } from './domain/types';
 import { t } from './i18n';
@@ -30,17 +31,22 @@ const SORTS: [SortKey, string][] = [
   ['name', t.sortName],
 ];
 
-/** Per-user search defaults: searches start from home when the URL has no location. */
+/**
+ * Per-user search defaults: start from home when the URL has no location, and
+ * with the family's ages, size and dog when the URL has no filters.
+ */
 function useSearchDefaults(): Partial<Filters> | null {
   const home = useProfile().profile?.home;
+  const { members } = useFamily();
   const { name, lat, lng } = home ?? {};
-  return useMemo(
-    () =>
-      name !== undefined && lat !== undefined && lng !== undefined
-        ? { origin: { lat, lng }, originLabel: name }
-        : null,
-    [name, lat, lng],
-  );
+  return useMemo(() => {
+    const defaults: Partial<Filters> = familyDefaults(members, new Date());
+    if (name !== undefined && lat !== undefined && lng !== undefined) {
+      defaults.origin = { lat, lng };
+      defaults.originLabel = name;
+    }
+    return Object.keys(defaults).length > 0 ? defaults : null;
+  }, [members, name, lat, lng]);
 }
 
 function SearchPage() {

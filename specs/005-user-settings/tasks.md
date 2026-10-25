@@ -71,12 +71,12 @@ description: 'Task list for 005 User Settings'
 
 ## Phase 5: US3, family members (P2)
 
-- [ ] T032 [P] [US3] Write the test `src/domain/family.test.ts` for `familyDefaults`: ages at a month boundary, 18+ adds no group, a dog alone, an empty family, and duplicate groups
-- [ ] T033 [P] [US3] Write the test `src/useFilters.test.ts`: defaults apply only when the URL has no filters
-- [ ] T034 [P] [US3] Write the test `src/routes/settings/FamilySection.test.tsx`: add, edit, remove and reorder, child-only birth fields, and the limit of 20
-- [ ] T035 [US3] Implement `src/domain/family.ts`
-- [ ] T036 [US3] Add the `defaults` argument to `src/useFilters.ts`, and wire it in `App.tsx`
-- [ ] T037 [US3] Add the family functions to `repo.ts` and the provider, and implement `FamilySection.tsx`
+- [x] T032 [P] [US3] Write the test `src/domain/family.test.ts` for `familyDefaults`: ages at a month boundary, 18+ adds no group, a dog alone, an empty family, and duplicate groups
+- [x] T033 [P] [US3] Write the test `src/useFilters.test.ts`: defaults apply only when the URL has no filters
+- [x] T034 [P] [US3] Write the test `src/routes/settings/FamilySection.test.tsx`: add, edit, remove and reorder, child-only birth fields, and the limit of 20
+- [x] T035 [US3] Implement `src/domain/family.ts`
+- [x] T036 [US3] Add the `defaults` argument to `src/useFilters.ts`, and wire it in `App.tsx`
+- [x] T037 [US3] Add the family functions to `repo.ts` and the provider, and implement `FamilySection.tsx`
 
 ---
 

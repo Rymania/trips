@@ -6,13 +6,15 @@ import { AuthContext, type AuthApi, type AuthState } from './AuthProvider';
 import type { TripsClient } from './client';
 import {
   ProfileProvider,
+  useFamily,
   useProfile,
   useSaved,
+  type FamilyApi,
   type ProfileApi,
   type SavedApi,
 } from './ProfileProvider';
 import type { Repo } from './repo';
-import type { Profile, SavedTrip } from './types';
+import type { FamilyMember, Profile, SavedTrip } from './types';
 
 const trip = (id: string, over: Partial<SavedTrip> = {}): SavedTrip => ({
   activityId: id,
@@ -25,8 +27,29 @@ const trip = (id: string, over: Partial<SavedTrip> = {}): SavedTrip => ({
 
 const PROFILE: Profile = { id: 'user-1', displayName: 'Sam', home: null, theme: 'system' };
 
-function fakeRepo(initial: SavedTrip[] = [], profile: Profile = PROFILE) {
+const member = (id: string, sortOrder: number, over: Partial<FamilyMember> = {}): FamilyMember => ({
+  id,
+  nickname: `Member ${id}`,
+  kind: 'adult',
+  birth: null,
+  sortOrder,
+  ...over,
+});
+
+function fakeRepo(
+  initial: SavedTrip[] = [],
+  profile: Profile = PROFILE,
+  family: FamilyMember[] = [],
+) {
   return {
+    listFamily: vi.fn(async () => family),
+    addMember: vi.fn(
+      async (_p: string, m: Pick<FamilyMember, 'nickname' | 'kind' | 'birth'>, sortOrder: number) =>
+        member('new', sortOrder, m),
+    ),
+    updateMember: vi.fn(async () => {}),
+    removeMember: vi.fn(async () => {}),
+    reorderFamily: vi.fn(async () => {}),
     getProfile: vi.fn(async () => profile),
     updateProfile: vi.fn(async () => {}),
     changeEmail: vi.fn(async () => {}),
@@ -45,12 +68,15 @@ const SIGNED_IN: AuthState = {
 
 let api!: SavedApi;
 let profileApi!: ProfileApi;
+let familyApi!: FamilyApi;
 function Probe() {
   const value = useSaved();
   const prof = useProfile();
+  const fam = useFamily();
   useEffect(() => {
     api = value;
     profileApi = prof;
+    familyApi = fam;
   });
   return null;
 }
@@ -303,5 +329,102 @@ describe('ProfileProvider: profile', () => {
       reason: 'unavailable',
     });
     expect(await profileApi.save({ displayName: 'x', home: null })).toBe(false);
+  });
+});
+
+describe('ProfileProvider: family', () => {
+  const names = () => familyApi.members.map((m) => m.id);
+  const ready = async (family: FamilyMember[]) => {
+    const view = setup(SIGNED_IN, fakeRepo([], PROFILE, family));
+    await waitFor(() => expect(familyApi.status).toBe('ready'));
+    return view;
+  };
+
+  it('is idle and empty when signed out', () => {
+    setup(ANON);
+    expect(familyApi.status).toBe('idle');
+    expect(familyApi.members).toEqual([]);
+  });
+
+  it('lists members by sort order', async () => {
+    await ready([member('b', 1), member('a', 0)]);
+    expect(names()).toEqual(['a', 'b']);
+  });
+
+  it('adds a member at the end once stored', async () => {
+    const { repo } = await ready([member('a', 0), member('b', 5)]);
+    let ok: boolean | undefined;
+    await act(async () => {
+      ok = await familyApi.add({ nickname: 'Rex', kind: 'dog', birth: null });
+    });
+    expect(ok).toBe(true);
+    expect(repo.addMember).toHaveBeenCalledWith(
+      'user-1',
+      { nickname: 'Rex', kind: 'dog', birth: null },
+      6,
+    );
+    expect(names()).toEqual(['a', 'b', 'new']);
+
+    repo.addMember.mockRejectedValueOnce(new Error('limit'));
+    await act(async () => {
+      ok = await familyApi.add({ nickname: 'Too many', kind: 'adult', birth: null });
+    });
+    expect(ok).toBe(false);
+    expect(names()).toEqual(['a', 'b', 'new']);
+  });
+
+  it('updates and removes, undoing failures', async () => {
+    const { repo } = await ready([member('a', 0), member('b', 1)]);
+    const rex = { nickname: 'Rex', kind: 'dog' as const, birth: null };
+    await act(() => familyApi.update('a', rex));
+    expect(repo.updateMember).toHaveBeenCalledWith('a', rex);
+    expect(familyApi.members[0]).toMatchObject(rex);
+
+    repo.updateMember.mockRejectedValueOnce(new Error('offline'));
+    let ok: boolean | undefined;
+    await act(async () => {
+      ok = await familyApi.update('a', { nickname: 'Lost', kind: 'adult', birth: null });
+    });
+    expect(ok).toBe(false);
+    expect(familyApi.members[0]).toMatchObject(rex);
+
+    repo.removeMember.mockRejectedValueOnce(new Error('offline'));
+    await act(async () => {
+      ok = await familyApi.remove('b');
+    });
+    expect(ok).toBe(false);
+    expect(names()).toEqual(['a', 'b']);
+
+    await act(() => familyApi.remove('b'));
+    expect(repo.removeMember).toHaveBeenCalledWith('b');
+    expect(names()).toEqual(['a']);
+    expect(await familyApi.update('missing', rex)).toBe(false);
+    expect(await familyApi.remove('missing')).toBe(false);
+  });
+
+  it('moves a member by swapping places with its neighbour', async () => {
+    const { repo } = await ready([member('a', 0), member('b', 1), member('c', 2)]);
+    await act(() => familyApi.move('c', -1));
+    expect(names()).toEqual(['a', 'c', 'b']);
+    expect(repo.reorderFamily).toHaveBeenCalledWith([
+      { id: 'c', sortOrder: 1 },
+      { id: 'b', sortOrder: 2 },
+    ]);
+
+    repo.reorderFamily.mockRejectedValueOnce(new Error('offline'));
+    let ok: boolean | undefined;
+    await act(async () => {
+      ok = await familyApi.move('a', 1);
+    });
+    expect(ok).toBe(false);
+    expect(names()).toEqual(['a', 'c', 'b']);
+
+    expect(await familyApi.move('a', -1)).toBe(false); // already first
+    expect(await familyApi.move('b', 1)).toBe(false); // already last
+  });
+
+  it('cannot change anything before the family loads', async () => {
+    setup(ANON);
+    expect(await familyApi.add({ nickname: 'x', kind: 'adult', birth: null })).toBe(false);
   });
 });

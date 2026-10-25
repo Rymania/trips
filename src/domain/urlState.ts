@@ -113,16 +113,32 @@ const PARAMS: Partial<Record<keyof Filters, string[]>> = {
   view: ['view'],
 };
 
+/** Filters proper, as opposed to the search's location, sort order and view. */
+const FILTER_KEYS = new Set<keyof Filters>([
+  'query',
+  'ageGroups',
+  'radiusKm',
+  'dogFriendly',
+  'categories',
+  'minCost',
+  'maxCost',
+  'familySize',
+]);
+
 /**
  * Applies per-user defaults (home location, family) to filters parsed from
- * `search`. A filter the URL sets, or one already changed from the app's
- * default, is left alone: links and the user's own choices always win.
+ * `search`. A setting the URL gives, or one already changed from the app's
+ * default, is left alone: links and the user's own choices always win. A URL
+ * with any filter at all gets no default filters (spec 005 FR-008), so a
+ * shared search isn't narrowed further by the viewer's family.
  */
 export function applyDefaults(f: Filters, defaults: Partial<Filters>, search: string): Filters {
   const p = new URLSearchParams(search);
   const d = defaultFilters();
+  const urlFilters = [...FILTER_KEYS].some((key) => (PARAMS[key] ?? []).some((k) => p.has(k)));
   const next: Filters = { ...f };
   for (const key of Object.keys(defaults) as (keyof Filters)[]) {
+    if (urlFilters && FILTER_KEYS.has(key)) continue;
     if ((PARAMS[key] ?? []).some((k) => p.has(k))) continue;
     if (JSON.stringify(f[key]) !== JSON.stringify(d[key])) continue;
     Object.assign(next, { [key]: defaults[key] });
