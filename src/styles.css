@@ -27,8 +27,9 @@
   --font-body: 'Nunito Sans Variable', system-ui, sans-serif;
   color-scheme: light dark;
 }
+/* Dark tokens: the device setting unless the user chose light (spec 005 US5). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #1d1f1b;
     --surface: #262923;
     --surface-high: #30332c;
@@ -46,6 +47,28 @@
     --danger: #e8a08f;
     --shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
   }
+}
+:root[data-theme='dark'] {
+  --bg: #1d1f1b;
+  --surface: #262923;
+  --surface-high: #30332c;
+  --field: #22241f;
+  --text: #ece6dc;
+  --muted: #b8b2a4;
+  --outline-variant: rgba(200, 192, 172, 0.2);
+  --primary: #8fbf9c;
+  --primary-strong: #9fcbab;
+  --on-primary: #17261c;
+  --primary-soft: rgba(143, 191, 156, 0.16);
+  --focus-ring: rgba(143, 191, 156, 0.4);
+  --tertiary: #d8c08a;
+  --tertiary-soft: rgba(216, 192, 138, 0.14);
+  --danger: #e8a08f;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
+  color-scheme: dark;
+}
+:root[data-theme='light'] {
+  color-scheme: light;
 }
 * {
   box-sizing: border-box;
@@ -859,6 +882,29 @@ dd {
     display: flex;
     border-radius: var(--radius);
   }
+}
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.account-menu__panel .theme-switch {
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: 0;
+}
+.account-menu__panel .theme-switch legend {
+  padding: 0;
+  margin-bottom: 0.4rem;
+}
+.form-card .theme-switch {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.form-card .theme-switch legend {
+  padding: 0;
+  margin-bottom: 0.4rem;
 }
 @media (max-width: 480px) {
   .account-pill__email {

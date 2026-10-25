@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { rememberNext } from '../routes/next';
 import { reasonFor, type AuthResult } from './AuthProvider';
 import type { Repo } from './repo';
-import type { Profile, ProfilePatch } from './types';
+import type { Profile, ProfilePatch, ThemePreference } from './types';
 import { useAccountData, type Accounts, type LoadStatus, type MakeRepo } from './useAccountData';
 
 export interface ProfileApi {
@@ -10,6 +10,7 @@ export interface ProfileApi {
   profile: Profile | null;
   /** Saves the name and home location; resolves false if the change didn't stick. */
   save: (patch: ProfilePatch) => Promise<boolean>;
+  saveTheme: (theme: ThemePreference) => Promise<boolean>;
   /** Emails a confirmation link to the new address (spec 005 US4 scenario 3). */
   changeEmail: (email: string) => Promise<AuthResult>;
   reload: () => void;
@@ -42,6 +43,19 @@ export function useProfileState(
     [userId, data, optimistic],
   );
 
+  const saveTheme = useCallback(
+    async (theme: ThemePreference) => {
+      if (!userId || !data) return false;
+      const previous = data.theme;
+      return optimistic(
+        (p) => ({ ...p, theme }),
+        (p) => ({ ...p, theme: previous }),
+        (r) => r.updateTheme(userId, theme),
+      );
+    },
+    [userId, data, optimistic],
+  );
+
   const changeEmail = useCallback(
     async (email: string): Promise<AuthResult> => {
       const r = (await ready())?.repo;
@@ -58,7 +72,7 @@ export function useProfileState(
   );
 
   return useMemo(
-    () => ({ status, profile: data, save, changeEmail, reload }),
-    [status, data, save, changeEmail, reload],
+    () => ({ status, profile: data, save, saveTheme, changeEmail, reload }),
+    [status, data, save, saveTheme, changeEmail, reload],
   );
 }

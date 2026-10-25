@@ -9,9 +9,11 @@ import {
   useFamily,
   useProfile,
   useSaved,
+  useTheme,
   type FamilyApi,
   type ProfileApi,
   type SavedApi,
+  type ThemeApi,
 } from './ProfileProvider';
 import type { Repo } from './repo';
 import type { FamilyMember, Profile, SavedTrip } from './types';
@@ -52,6 +54,7 @@ function fakeRepo(
     reorderFamily: vi.fn(async () => {}),
     getProfile: vi.fn(async () => profile),
     updateProfile: vi.fn(async () => {}),
+    updateTheme: vi.fn(async () => {}),
     changeEmail: vi.fn(async () => {}),
     listSaved: vi.fn(async () => initial),
     addSaved: vi.fn(async () => {}),
@@ -69,14 +72,17 @@ const SIGNED_IN: AuthState = {
 let api!: SavedApi;
 let profileApi!: ProfileApi;
 let familyApi!: FamilyApi;
+let themeApi!: ThemeApi;
 function Probe() {
   const value = useSaved();
   const prof = useProfile();
   const fam = useFamily();
+  const theme = useTheme();
   useEffect(() => {
     api = value;
     profileApi = prof;
     familyApi = fam;
+    themeApi = theme;
   });
   return null;
 }
@@ -460,5 +466,54 @@ describe('ProfileProvider: family', () => {
   it('cannot change anything before the family loads', async () => {
     setup(ANON);
     expect(await familyApi.add({ nickname: 'x', kind: 'adult', birth: null })).toBe(false);
+  });
+});
+
+describe('ProfileProvider: theme', () => {
+  beforeEach(() => document.documentElement.removeAttribute('data-theme'));
+
+  it('starts from the theme saved on this device', () => {
+    localStorage.setItem('trips.theme', 'dark');
+    setup(ANON);
+    expect(themeApi.preference).toBe('dark');
+    expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('applies and remembers an anonymous choice on this device only', async () => {
+    const { repo } = setup(ANON);
+    let ok: boolean | undefined;
+    await act(async () => {
+      ok = await themeApi.setPreference('dark');
+    });
+    expect(ok).toBe(true);
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(localStorage.getItem('trips.theme')).toBe('dark');
+    expect(repo.updateTheme).not.toHaveBeenCalled();
+  });
+
+  it('switches to the account’s theme once the profile loads', async () => {
+    localStorage.setItem('trips.theme', 'light');
+    setup(SIGNED_IN, fakeRepo([], { ...PROFILE, theme: 'dark' }));
+    await waitFor(() => expect(themeApi.preference).toBe('dark'));
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(localStorage.getItem('trips.theme')).toBe('dark');
+  });
+
+  it('saves a signed-in choice to the account, undoing it if that fails', async () => {
+    const { repo } = setup(SIGNED_IN);
+    await waitFor(() => expect(profileApi.status).toBe('ready'));
+
+    await act(() => themeApi.setPreference('dark'));
+    expect(repo.updateTheme).toHaveBeenCalledWith('user-1', 'dark');
+    expect(profileApi.profile?.theme).toBe('dark');
+
+    repo.updateTheme.mockRejectedValueOnce(new Error('offline'));
+    let ok: boolean | undefined;
+    await act(async () => {
+      ok = await themeApi.setPreference('light');
+    });
+    expect(ok).toBe(false);
+    expect(themeApi.preference).toBe('dark');
+    expect(document.documentElement.dataset.theme).toBe('dark');
   });
 });

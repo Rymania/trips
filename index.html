@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#faf6f0" />
     <title>Family Day Planner</title>
+    <script>
+      // Applies the saved theme before first paint (specs/005-user-settings research R5).
+      // Keep in step with src/account/theme.ts. A future Content-Security-Policy needs this
+      // script's hash in script-src.
+      try {
+        var theme = localStorage.getItem('trips.theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+        var dark =
+          theme === 'dark' ||
+          (theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.querySelector('meta[name="theme-color"]').content = dark ? '#1d1f1b' : '#faf6f0';
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
