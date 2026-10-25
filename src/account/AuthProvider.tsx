@@ -56,7 +56,7 @@ function fromSession(session: Pick<Session, 'user'> | null): AuthState {
 }
 
 /** Maps supabase-js AuthError fields to the reasons the UI explains. */
-function reasonFor(error: unknown): AuthFailure {
+export function reasonFor(error: unknown): AuthFailure {
   const { status, code } = error as { status?: number; code?: string };
   if (status === 429 || code?.includes('rate_limit')) return 'rateLimited';
   if (code === 'otp_expired') return 'expired';

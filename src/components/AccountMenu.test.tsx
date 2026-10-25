@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthContext, type AuthApi, type AuthState } from '../account/AuthProvider';
+import { profile, renderWithAccount } from '../test/contexts';
 import { AccountMenu } from './AccountMenu';
 
 function renderWith(state: AuthState, overrides: Partial<AuthApi> = {}) {
@@ -113,5 +114,16 @@ describe('AccountMenu', () => {
     await user.click(screen.getByRole('button', { name: 'Sign out' }));
     expect(api.signOut).toHaveBeenCalled();
     expect(window.location.pathname).toBe('/');
+  });
+
+  it('shows the display name once the profile has one', async () => {
+    const user = userEvent.setup();
+    renderWithAccount(<AccountMenu />, {
+      profile: { profile: profile({ displayName: 'Sam Rivers' }) },
+    });
+    const toggle = screen.getByRole('button', { name: 'Account menu for Sam Rivers' });
+    expect(toggle).toHaveTextContent('SSam Rivers');
+    await user.click(toggle);
+    expect(screen.getByText('Signed in as sam@trips.test')).toBeInTheDocument();
   });
 });

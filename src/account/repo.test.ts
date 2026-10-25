@@ -12,14 +12,15 @@ function fakeClient(result: { data?: unknown; error?: unknown } = {}) {
     then: (resolve: (v: typeof settled) => unknown, reject: (e: unknown) => unknown) =>
       Promise.resolve(settled).then(resolve, reject),
   };
-  for (const m of ['select', 'order', 'upsert', 'update', 'delete', 'eq']) {
+  for (const m of ['select', 'order', 'upsert', 'update', 'delete', 'eq', 'single']) {
     builder[m] = (...args: unknown[]) => {
       calls.push([m, args]);
       return builder;
     };
   }
   const from = vi.fn(() => builder);
-  return { client: { from } as unknown as TripsClient, from, calls };
+  const auth = { updateUser: vi.fn(async () => ({ data: {}, error: result.error ?? null })) };
+  return { client: { from, auth } as unknown as TripsClient, from, auth, calls };
 }
 
 describe('repo: saved trips', () => {
@@ -96,5 +97,76 @@ describe('repo: saved trips', () => {
     await expect(repo.addSaved('u', [{ activityId: 'a', activityName: 'A' }])).rejects.toBe(error);
     await expect(repo.updateSaved('u', 'a', { plannedFor: null, note: null })).rejects.toBe(error);
     await expect(repo.removeSaved('u', 'a')).rejects.toBe(error);
+  });
+});
+
+describe('repo: profile', () => {
+  const row = {
+    id: 'user-1',
+    display_name: 'Sam',
+    home_place_name: 'Brighton',
+    home_lat: 50.8225,
+    home_lng: -0.1372,
+    theme: 'dark',
+  };
+
+  it('reads the profile, mapping the home location', async () => {
+    const { client, from, calls } = fakeClient({ data: row });
+    expect(await createRepo(client).getProfile('user-1')).toEqual({
+      id: 'user-1',
+      displayName: 'Sam',
+      home: { name: 'Brighton', lat: 50.8225, lng: -0.1372 },
+      theme: 'dark',
+    });
+    expect(from).toHaveBeenCalledWith('profiles');
+    expect(calls).toEqual([
+      ['select', ['id, display_name, home_place_name, home_lat, home_lng, theme']],
+      ['eq', ['id', 'user-1']],
+      ['single', []],
+    ]);
+  });
+
+  it('treats a partial home location as none', async () => {
+    const { client } = fakeClient({ data: { ...row, home_lat: null, display_name: null } });
+    expect(await createRepo(client).getProfile('user-1')).toMatchObject({
+      displayName: null,
+      home: null,
+    });
+  });
+
+  it('updates the name and home location together', async () => {
+    const { client, calls } = fakeClient();
+    const repo = createRepo(client);
+    await repo.updateProfile('user-1', {
+      displayName: 'Sam',
+      home: { name: 'Brighton', lat: 50.8, lng: -0.1 },
+    });
+    await repo.updateProfile('user-1', { displayName: 'Sam', home: null });
+    expect(calls).toEqual([
+      [
+        'update',
+        [{ display_name: 'Sam', home_place_name: 'Brighton', home_lat: 50.8, home_lng: -0.1 }],
+      ],
+      ['eq', ['id', 'user-1']],
+      ['update', [{ display_name: 'Sam', home_place_name: null, home_lat: null, home_lng: null }]],
+      ['eq', ['id', 'user-1']],
+    ]);
+  });
+
+  it('asks Auth to change the email, confirming through the callback page', async () => {
+    const { client, auth } = fakeClient();
+    await createRepo(client).changeEmail('new@trips.test', 'https://trips.test/auth/callback');
+    expect(auth.updateUser).toHaveBeenCalledWith(
+      { email: 'new@trips.test' },
+      { emailRedirectTo: 'https://trips.test/auth/callback' },
+    );
+  });
+
+  it('throws profile and email errors', async () => {
+    const error = { message: 'nope', status: 422, code: 'email_exists' };
+    const repo = createRepo(fakeClient({ error }).client);
+    await expect(repo.getProfile('u')).rejects.toBe(error);
+    await expect(repo.updateProfile('u', { displayName: 'x', home: null })).rejects.toBe(error);
+    await expect(repo.changeEmail('a@b.c', '/')).rejects.toBe(error);
   });
 });

@@ -82,9 +82,9 @@ description: 'Task list for 005 User Settings'
 
 ## Phase 6: US4, profile (P2)
 
-- [ ] T038 [P] [US4] Write the test `ProfileSection.test.tsx`: name validation, choosing a home location through the existing gazetteer, and the "confirm from your new address" message when the email changes
-- [ ] T039 [US4] Implement `ProfileSection.tsx` and `Settings.tsx` (section navigation and the signed-in guard)
-- [ ] T040 [US4] Use the home location as the default when the URL has no `loc` parameter, in `useFilters` and `App`
+- [x] T038 [P] [US4] Write the test `ProfileSection.test.tsx`: name validation, choosing a home location through the existing gazetteer, and the "confirm from your new address" message when the email changes
+- [x] T039 [US4] Implement `ProfileSection.tsx` and `Settings.tsx` (section navigation and the signed-in guard)
+- [x] T040 [US4] Use the home location as the default when the URL has no `loc` parameter, in `useFilters` and `App`
 
 ---
 

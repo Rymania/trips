@@ -1,6 +1,7 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useContext, useEffect, useId, useRef, useState } from 'react';
 import type { FocusEvent } from 'react';
 import { useAuth } from '../account/AuthProvider';
+import { ProfileContext } from '../account/ProfileProvider';
 import { t } from '../i18n';
 import { Link } from '../routes/Link';
 import { navigate } from '../routes/useRoute';
@@ -8,6 +9,8 @@ import { navigate } from '../routes/useRoute';
 /** Header sign-in link or account menu (spec 005 FR-003). */
 export function AccountMenu() {
   const { state, signOut } = useAuth();
+  // Read directly so the menu also works outside ProfileProvider (e.g. in tests).
+  const displayName = useContext(ProfileContext)?.profile?.displayName;
   switch (state.status) {
     case 'disabled':
       return null;
@@ -26,11 +29,25 @@ export function AccountMenu() {
       );
     }
     case 'signedIn':
-      return <SignedInMenu email={state.user.email} onSignOut={signOut} />;
+      return (
+        <SignedInMenu
+          name={displayName ?? state.user.email}
+          email={state.user.email}
+          onSignOut={signOut}
+        />
+      );
   }
 }
 
-function SignedInMenu({ email, onSignOut }: { email: string; onSignOut: () => Promise<void> }) {
+function SignedInMenu({
+  name,
+  email,
+  onSignOut,
+}: {
+  name: string;
+  email: string;
+  onSignOut: () => Promise<void>;
+}) {
   const [open, setOpen] = useState(false);
   const toggle = useRef<HTMLButtonElement>(null);
   const panelId = useId();
@@ -63,13 +80,13 @@ function SignedInMenu({ email, onSignOut }: { email: string; onSignOut: () => Pr
         className="btn account-pill"
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label={t.accountMenu(email)}
+        aria-label={t.accountMenu(name)}
         onClick={() => setOpen((o) => !o)}
       >
         <span className="avatar" aria-hidden="true">
-          {email.charAt(0).toUpperCase()}
+          {name.charAt(0).toUpperCase()}
         </span>
-        <span className="account-pill__email">{email}</span>
+        <span className="account-pill__email">{name}</span>
       </button>
       {open && (
         <div id={panelId} className="account-menu__panel">

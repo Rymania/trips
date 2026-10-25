@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <body
+    style="
+      margin: 0;
+      padding: 24px;
+      background: #faf6f0;
+      color: #2e3230;
+      font-family: 'Nunito Sans', system-ui, sans-serif;
+      line-height: 1.6;
+    "
+  >
+    <div
+      style="
+        max-width: 480px;
+        margin: 0 auto;
+        background: #f3ede3;
+        border-radius: 12px;
+        padding: 24px;
+      "
+    >
+      <h1
+        style="
+          font-family: Literata, Georgia, serif;
+          color: #3d6a4b;
+          font-size: 22px;
+          margin: 0 0 12px;
+        "
+      >
+        Confirm your new email address
+      </h1>
+      <p style="margin: 0 0 16px">
+        You asked to sign in to Family Day Planner with {{ .NewEmail }} instead of {{ .Email }}.
+        Confirm the change with this button:
+      </p>
+      <p style="margin: 0 0 20px">
+        <a
+          href="{{ .ConfirmationURL }}"
+          style="
+            display: inline-block;
+            background: #4a7c59;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            padding: 12px 20px;
+            border-radius: 12px;
+          "
+          >Confirm new email</a
+        >
+      </p>
+      <p style="margin: 0; font-size: 14px; color: #5c5f55">
+        Until you confirm, you keep signing in with {{ .Email }}. If you didn't ask for this, ignore
+        this email and nothing changes.
+      </p>
+    </div>
+  </body>
+</html>

@@ -1,6 +1,13 @@
 import type { TripsClient } from './client';
 import type { Database } from './database.types';
-import type { SavedPatch, SavedTrip, SessionSave } from './types';
+import type {
+  Profile,
+  ProfilePatch,
+  SavedPatch,
+  SavedTrip,
+  SessionSave,
+  ThemePreference,
+} from './types';
 
 /**
  * Typed data access for the signed-in user's rows. Row-level security limits
@@ -12,7 +19,22 @@ type SavedRow = Pick<
   'activity_id' | 'activity_name' | 'saved_at' | 'planned_for' | 'note'
 >;
 
+type ProfileRow = Pick<
+  Database['public']['Tables']['profiles']['Row'],
+  'id' | 'display_name' | 'home_place_name' | 'home_lat' | 'home_lng' | 'theme'
+>;
+
 const NAME_MAX = 200;
+
+const toProfile = (r: ProfileRow): Profile => ({
+  id: r.id,
+  displayName: r.display_name,
+  home:
+    r.home_place_name !== null && r.home_lat !== null && r.home_lng !== null
+      ? { name: r.home_place_name, lat: r.home_lat, lng: r.home_lng }
+      : null,
+  theme: r.theme as ThemePreference,
+});
 
 const toSavedTrip = (r: SavedRow): SavedTrip => ({
   activityId: r.activity_id,
@@ -31,6 +53,38 @@ function check<T>({ data, error }: { data: T; error: unknown }): T {
 export function createRepo(client: TripsClient) {
   const saved = () => client.from('saved_trips');
   return {
+    async getProfile(id: string): Promise<Profile> {
+      const row = check(
+        await client
+          .from('profiles')
+          .select('id, display_name, home_place_name, home_lat, home_lng, theme')
+          .eq('id', id)
+          .single(),
+      );
+      if (!row) throw new Error('Profile not found');
+      return toProfile(row);
+    },
+
+    async updateProfile(id: string, { displayName, home }: ProfilePatch): Promise<void> {
+      check(
+        await client
+          .from('profiles')
+          .update({
+            display_name: displayName,
+            home_place_name: home?.name ?? null,
+            home_lat: home?.lat ?? null,
+            home_lng: home?.lng ?? null,
+          })
+          .eq('id', id),
+      );
+    },
+
+    /** Auth emails the new address; the change applies once that link is followed. */
+    async changeEmail(email: string, redirectTo: string): Promise<void> {
+      const { error } = await client.auth.updateUser({ email }, { emailRedirectTo: redirectTo });
+      if (error) throw error;
+    },
+
     async listSaved(): Promise<SavedTrip[]> {
       const rows = check(
         await saved()

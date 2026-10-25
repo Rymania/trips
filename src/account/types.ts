@@ -15,3 +15,20 @@ export interface SessionSave {
 }
 
 export type SavedPatch = Pick<SavedTrip, 'plannedFor' | 'note'>;
+
+export type ThemePreference = 'system' | 'light' | 'dark';
+
+export interface Home {
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+export interface Profile {
+  id: string;
+  displayName: string | null;
+  home: Home | null;
+  theme: ThemePreference;
+}
+
+export type ProfilePatch = Pick<Profile, 'displayName' | 'home'>;

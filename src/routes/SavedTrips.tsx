@@ -1,13 +1,15 @@
 import { useId, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useAuth } from '../account/AuthProvider';
-import { useSaved, type SavedApi } from '../account/ProfileProvider';
+import { useProfile, useSaved, type SavedApi } from '../account/ProfileProvider';
 import { orderSaved } from '../account/savedMerge';
 import type { SavedTrip } from '../account/types';
-import type { Activity } from '../domain/types';
+import { haversineKm } from '../domain/geo';
+import type { Activity, LatLng } from '../domain/types';
 import { t } from '../i18n';
 import { useActivities } from '../useActivities';
 import { Link } from './Link';
+import { SignInRequired } from './SignInRequired';
 
 const NOTE_MAX = 500;
 
@@ -30,30 +32,22 @@ export default function SavedTrips() {
       </p>
     );
   }
-  if (state.status !== 'signedIn') return <SignedOut disabled={state.status === 'disabled'} />;
+  if (state.status !== 'signedIn') {
+    return (
+      <SignInRequired
+        title={t.savedTrips}
+        text={t.savedSignedOut}
+        next="/saved"
+        disabled={state.status === 'disabled'}
+      />
+    );
+  }
   return <SavedList />;
-}
-
-function SignedOut({ disabled }: { disabled: boolean }) {
-  return (
-    <section className="page narrow card form-card" aria-labelledby="saved-title">
-      <h2 id="saved-title">{t.savedTrips}</h2>
-      <p>{disabled ? t.accountsUnavailable : t.savedSignedOut}</p>
-      {disabled ? (
-        <Link className="btn" to="/">
-          {t.backToSearch}
-        </Link>
-      ) : (
-        <Link className="btn btn-primary" to={`/sign-in?next=${encodeURIComponent('/saved')}`}>
-          {t.signIn}
-        </Link>
-      )}
-    </section>
-  );
 }
 
 function SavedList() {
   const saved = useSaved();
+  const home = useProfile().profile?.home ?? null;
   const { activities, loading } = useActivities();
   const heading = useRef<HTMLHeadingElement>(null);
   const byId = useMemo(() => new Map(activities.map((a) => [a.id, a])), [activities]);
@@ -71,6 +65,7 @@ function SavedList() {
               key={trip.activityId}
               trip={trip}
               activity={byId.get(trip.activityId)}
+              home={home}
               unavailable={!loading && !byId.has(trip.activityId)}
               onUpdate={saved.update}
               onRemove={saved.remove}
@@ -122,11 +117,23 @@ function SavedBody({
   return <>{children}</>;
 }
 
+/** "Saved 1 Oct 2026 · 3.6 km away · Planned for 1 Nov 2026", leaving out what's unknown. */
+function tripMeta(trip: SavedTrip, activity: Activity | undefined, home: LatLng | null) {
+  return [
+    t.savedOn(formatDate(trip.savedAt)),
+    home && activity ? t.away(haversineKm(home, activity.location)) : null,
+    trip.plannedFor ? t.plannedFor(formatDate(trip.plannedFor)) : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
 type ItemStatus = 'idle' | 'saving' | 'saved' | 'failed' | 'removeFailed';
 
 function SavedItem({
   trip,
   activity,
+  home,
   unavailable,
   onUpdate,
   onRemove,
@@ -134,6 +141,7 @@ function SavedItem({
 }: {
   trip: SavedTrip;
   activity: Activity | undefined;
+  home: LatLng | null;
   unavailable: boolean;
   onUpdate: SavedApi['update'];
   onRemove: SavedApi['remove'];
@@ -170,10 +178,7 @@ function SavedItem({
       <div className="card-body">
         <h3>{name}</h3>
         {unavailable && <p className="tag tag--warn">{t.noLongerAvailable}</p>}
-        <p className="meta">
-          {t.savedOn(formatDate(trip.savedAt))}
-          {trip.plannedFor && ` · ${t.plannedFor(formatDate(trip.plannedFor))}`}
-        </p>
+        <p className="meta">{tripMeta(trip, activity, home)}</p>
         {unavailable ? (
           <p className="row">{removeButton}</p>
         ) : (
@@ -255,7 +260,7 @@ function TripForm({
         <button type="submit" className="btn btn-primary" disabled={!dirty || status === 'saving'}>
           {status === 'saving' ? t.savingChanges : t.saveChanges}
         </button>
-        <span role="status" className="saved-item__status">
+        <span role="status" className="form-status">
           {status === 'saved' ? t.changesSaved : ''}
         </span>
         {removeButton}

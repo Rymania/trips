@@ -96,3 +96,36 @@ export function filtersToSearch(f: Filters): string {
   const s = p.toString();
   return s ? `?${s}` : '';
 }
+
+/** The query parameters that set each filter, for deciding whether the URL chose it. */
+const PARAMS: Partial<Record<keyof Filters, string[]>> = {
+  query: ['q'],
+  ageGroups: ['age'],
+  radiusKm: ['radius'],
+  dogFriendly: ['dog'],
+  categories: ['cat'],
+  minCost: ['min'],
+  maxCost: ['max'],
+  origin: ['lat', 'lng'],
+  originLabel: ['lat', 'lng'],
+  familySize: ['fam'],
+  sort: ['sort'],
+  view: ['view'],
+};
+
+/**
+ * Applies per-user defaults (home location, family) to filters parsed from
+ * `search`. A filter the URL sets, or one already changed from the app's
+ * default, is left alone: links and the user's own choices always win.
+ */
+export function applyDefaults(f: Filters, defaults: Partial<Filters>, search: string): Filters {
+  const p = new URLSearchParams(search);
+  const d = defaultFilters();
+  const next: Filters = { ...f };
+  for (const key of Object.keys(defaults) as (keyof Filters)[]) {
+    if ((PARAMS[key] ?? []).some((k) => p.has(k))) continue;
+    if (JSON.stringify(f[key]) !== JSON.stringify(d[key])) continue;
+    Object.assign(next, { [key]: defaults[key] });
+  }
+  return next;
+}

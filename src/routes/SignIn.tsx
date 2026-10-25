@@ -2,11 +2,11 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useAuth, type AuthFailure } from '../account/AuthProvider';
 import { t } from '../i18n';
+import { EMAIL } from './email';
 import { Link } from './Link';
 import { rememberNext, safeNext, takeNext } from './next';
 import { navigate } from './useRoute';
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CODE = /^\d{6}$/;
 
 const failureText: Record<AuthFailure, string> = {
