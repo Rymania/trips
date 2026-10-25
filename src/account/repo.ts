@@ -1,6 +1,10 @@
 import type { TripsClient } from './client';
 import type { Database } from './database.types';
 import type {
+  ContactChoice,
+  ContactPreference,
+  ContactTopic,
+  DigestFrequency,
   FamilyMember,
   MemberInput,
   MemberKind,
@@ -32,7 +36,20 @@ type MemberRow = Pick<
   'id' | 'nickname' | 'kind' | 'birth_year' | 'birth_month' | 'sort_order'
 >;
 
+type ContactRow = Pick<
+  Database['public']['Tables']['contact_preferences']['Row'],
+  'topic' | 'opted_in' | 'frequency' | 'changed_at'
+>;
+
 const NAME_MAX = 200;
+const CONTACT_COLUMNS = 'topic, opted_in, frequency, changed_at';
+
+const toContact = (r: ContactRow): ContactPreference => ({
+  topic: r.topic as ContactTopic,
+  optedIn: r.opted_in,
+  frequency: r.frequency as DigestFrequency | null,
+  changedAt: r.changed_at,
+});
 const MEMBER_COLUMNS = 'id, nickname, kind, birth_year, birth_month, sort_order';
 
 const toMember = (r: MemberRow): FamilyMember => ({
@@ -152,6 +169,31 @@ export function createRepo(client: TripsClient) {
         order.map(({ id, sortOrder }) => family().update({ sort_order: sortOrder }).eq('id', id)),
       );
       results.forEach(check);
+    },
+
+    async listContact(): Promise<ContactPreference[]> {
+      const rows = check(await client.from('contact_preferences').select(CONTACT_COLUMNS));
+      return (rows ?? []).map(toContact);
+    },
+
+    /** Stores one choice; the database sets changed_at when opted_in changes. */
+    async saveContact(
+      profileId: string,
+      topic: ContactTopic,
+      { optedIn, frequency }: ContactChoice,
+    ): Promise<ContactPreference> {
+      const row = check(
+        await client
+          .from('contact_preferences')
+          .upsert(
+            { profile_id: profileId, topic, opted_in: optedIn, frequency },
+            { onConflict: 'profile_id,topic' },
+          )
+          .select(CONTACT_COLUMNS)
+          .single(),
+      );
+      if (!row) throw new Error('Contact preference not returned');
+      return toContact(row);
     },
 
     async listSaved(): Promise<SavedTrip[]> {

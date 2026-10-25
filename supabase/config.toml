@@ -403,8 +403,14 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
-# [edge_runtime.secrets]
-# secret_key = "env(SECRET_VALUE)"
+# Local stack only: production sets a random key with
+# `supabase secrets set UNSUBSCRIBE_SIGNING_KEY=$(openssl rand -hex 32)`.
+[edge_runtime.secrets]
+UNSUBSCRIBE_SIGNING_KEY = "local-development-only-unsubscribe-key"
+
+# Unsubscribe links work without signing in; the signed link is the proof (spec 005 US6).
+[functions.unsubscribe]
+verify_jwt = false
 
 [analytics]
 enabled = false

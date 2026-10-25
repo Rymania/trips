@@ -2,13 +2,15 @@ import { useAuth } from '../../account/AuthProvider';
 import { t } from '../../i18n';
 import { SignInRequired } from '../SignInRequired';
 import { AppearanceSection } from './AppearanceSection';
+import { ContactSection } from './ContactSection';
 import { FamilySection } from './FamilySection';
 import { ProfileSection } from './ProfileSection';
 
-/** Sections in page order; later stories add Contact and Your data. */
+/** Sections in page order (spec 005 FR-004); US7 adds Your data. */
 const SECTIONS = [
   { id: 'profile', label: t.profile, Section: ProfileSection },
   { id: 'family', label: t.family, Section: FamilySection },
+  { id: 'contact', label: t.contact, Section: ContactSection },
   { id: 'appearance', label: t.appearance, Section: AppearanceSection },
 ];
 

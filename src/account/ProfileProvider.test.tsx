@@ -6,17 +6,19 @@ import { AuthContext, type AuthApi, type AuthState } from './AuthProvider';
 import type { TripsClient } from './client';
 import {
   ProfileProvider,
+  useContact,
   useFamily,
   useProfile,
   useSaved,
   useTheme,
+  type ContactApi,
   type FamilyApi,
   type ProfileApi,
   type SavedApi,
   type ThemeApi,
 } from './ProfileProvider';
 import type { Repo } from './repo';
-import type { FamilyMember, Profile, SavedTrip } from './types';
+import type { ContactPreference, FamilyMember, Profile, SavedTrip } from './types';
 
 const trip = (id: string, over: Partial<SavedTrip> = {}): SavedTrip => ({
   activityId: id,
@@ -42,8 +44,17 @@ function fakeRepo(
   initial: SavedTrip[] = [],
   profile: Profile = PROFILE,
   family: FamilyMember[] = [],
+  contact: ContactPreference[] = [],
 ) {
   return {
+    listContact: vi.fn(async () => contact),
+    saveContact: vi.fn(
+      async (
+        _p: string,
+        topic: ContactPreference['topic'],
+        c: Pick<ContactPreference, 'optedIn' | 'frequency'>,
+      ): Promise<ContactPreference> => ({ topic, ...c, changedAt: '2026-10-25T12:00:00.000Z' }),
+    ),
     listFamily: vi.fn(async () => family),
     addMember: vi.fn(
       async (_p: string, m: Pick<FamilyMember, 'nickname' | 'kind' | 'birth'>, sortOrder: number) =>
@@ -73,12 +84,15 @@ let api!: SavedApi;
 let profileApi!: ProfileApi;
 let familyApi!: FamilyApi;
 let themeApi!: ThemeApi;
+let contactApi!: ContactApi;
 function Probe() {
   const value = useSaved();
   const prof = useProfile();
   const fam = useFamily();
   const theme = useTheme();
+  const contact = useContact();
   useEffect(() => {
+    contactApi = contact;
     api = value;
     profileApi = prof;
     familyApi = fam;
@@ -542,5 +556,62 @@ describe('ProfileProvider: theme', () => {
     expect(ok).toBe(false);
     expect(themeApi.preference).toBe('dark');
     expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+});
+
+describe('ProfileProvider: contact preferences', () => {
+  const digest: ContactPreference = {
+    topic: 'nearby_digest',
+    optedIn: true,
+    frequency: 'weekly',
+    changedAt: '2026-10-01T09:00:00.000Z',
+  };
+
+  it('treats topics with no stored row as off', async () => {
+    setup(SIGNED_IN, fakeRepo([], PROFILE, [], [digest]));
+    await waitFor(() => expect(contactApi.status).toBe('ready'));
+    expect(contactApi.get('nearby_digest')).toEqual(digest);
+    expect(contactApi.get('product_news')).toEqual({
+      topic: 'product_news',
+      optedIn: false,
+      frequency: null,
+      changedAt: null,
+    });
+  });
+
+  it('saves a choice, then shows the time the server recorded', async () => {
+    const { repo } = setup(SIGNED_IN);
+    await waitFor(() => expect(contactApi.status).toBe('ready'));
+    let ok: boolean | undefined;
+    await act(async () => {
+      ok = await contactApi.set('product_news', { optedIn: true, frequency: null });
+    });
+    expect(ok).toBe(true);
+    expect(repo.saveContact).toHaveBeenCalledWith('user-1', 'product_news', {
+      optedIn: true,
+      frequency: null,
+    });
+    expect(contactApi.get('product_news')).toMatchObject({
+      optedIn: true,
+      changedAt: '2026-10-25T12:00:00.000Z',
+    });
+  });
+
+  it('puts the previous choice back when saving fails', async () => {
+    const repo = fakeRepo([], PROFILE, [], [digest]);
+    repo.saveContact.mockRejectedValueOnce(new Error('offline'));
+    setup(SIGNED_IN, repo);
+    await waitFor(() => expect(contactApi.status).toBe('ready'));
+    let ok: boolean | undefined;
+    await act(async () => {
+      ok = await contactApi.set('nearby_digest', { optedIn: false, frequency: 'weekly' });
+    });
+    expect(ok).toBe(false);
+    expect(contactApi.get('nearby_digest')).toEqual(digest);
+  });
+
+  it('is idle when signed out', () => {
+    setup(ANON);
+    expect(contactApi.status).toBe('idle');
   });
 });

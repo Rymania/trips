@@ -197,4 +197,22 @@ export const en = {
   appearanceIntro:
     'Choose how the app looks. When you’re signed in, your choice follows you to your other devices.',
   themeSaveFailed: 'We couldn’t save your theme to your account. Please try again.',
+
+  // Contact preferences (spec 005 US6)
+  contact: 'Email preferences',
+  contactIntro: 'Choose which emails you’d like from us. Everything is off until you turn it on.',
+  contactAccountEmails:
+    'Emails we need to run your account, like sign-in codes and email change confirmations, are always sent.',
+  productNews: 'Product news',
+  productNewsHint: 'Occasional emails about new features in Family Day Planner.',
+  nearbyDigest: 'New activities near home',
+  nearbyDigestHint: 'A round-up of new activities near your home location.',
+  howOften: 'How often',
+  weekly: 'Weekly',
+  monthly: 'Monthly',
+  lastChanged: (when: string) => `Last changed ${when}`,
+  needsHome: 'The round-up uses your home location.',
+  addHome: 'Add a home location',
+  contactFailed: 'We couldn’t save your email choices. Please try again.',
+  contactLoadFailed: 'We couldn’t load your email choices.',
 } as const;

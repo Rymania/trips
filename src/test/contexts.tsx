@@ -3,16 +3,18 @@ import type { ReactElement } from 'react';
 import { vi } from 'vitest';
 import { AuthContext, type AuthApi, type AuthState } from '../account/AuthProvider';
 import {
+  ContactContext,
   FamilyContext,
   ProfileContext,
   SavedContext,
   ThemeContext,
+  type ContactApi,
   type FamilyApi,
   type ProfileApi,
   type SavedApi,
   type ThemeApi,
 } from '../account/ProfileProvider';
-import type { FamilyMember, Profile } from '../account/types';
+import type { ContactPreference, ContactTopic, FamilyMember, Profile } from '../account/types';
 
 export const signedIn = (email = 'sam@trips.test', id = 'user-1'): AuthState => ({
   status: 'signedIn',
@@ -90,6 +92,26 @@ export function themeApi(over: Partial<ThemeApi> = {}): ThemeApi {
   return { preference: 'system', setPreference: vi.fn(async () => true), ...over };
 }
 
+const off = (topic: ContactTopic): ContactPreference => ({
+  topic,
+  optedIn: false,
+  frequency: null,
+  changedAt: null,
+});
+
+export function contactApi(
+  over: Partial<ContactApi> & { prefs?: ContactPreference[] } = {},
+): ContactApi {
+  const { prefs = [], ...rest } = over;
+  return {
+    status: 'ready',
+    get: (topic) => prefs.find((p) => p.topic === topic) ?? off(topic),
+    set: vi.fn(async () => true),
+    reload: vi.fn(),
+    ...rest,
+  };
+}
+
 /** Renders `ui` inside the account contexts, with fakes for anything not given. */
 export function renderWithAccount(
   ui: ReactElement,
@@ -99,12 +121,14 @@ export function renderWithAccount(
     profile: prof = {},
     family = {},
     theme = {},
+    contact = {},
   }: {
     auth?: AuthState;
     saved?: Partial<SavedApi>;
     profile?: Partial<ProfileApi>;
     family?: Partial<FamilyApi>;
     theme?: Partial<ThemeApi>;
+    contact?: Parameters<typeof contactApi>[0];
   } = {},
 ) {
   const apis = {
@@ -113,13 +137,16 @@ export function renderWithAccount(
     profile: profileApi(prof),
     family: familyApi(family),
     theme: themeApi(theme),
+    contact: contactApi(contact),
   };
   const view = render(
     <AuthContext.Provider value={apis.auth}>
       <ProfileContext.Provider value={apis.profile}>
         <FamilyContext.Provider value={apis.family}>
           <ThemeContext.Provider value={apis.theme}>
-            <SavedContext.Provider value={apis.saved}>{ui}</SavedContext.Provider>
+            <ContactContext.Provider value={apis.contact}>
+              <SavedContext.Provider value={apis.saved}>{ui}</SavedContext.Provider>
+            </ContactContext.Provider>
           </ThemeContext.Provider>
         </FamilyContext.Provider>
       </ProfileContext.Provider>

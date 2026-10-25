@@ -284,3 +284,55 @@ describe('repo: family', () => {
     await expect(repo.reorderFamily([{ id: 'm', sortOrder: 0 }])).rejects.toBe(error);
   });
 });
+
+describe('repo: contact preferences', () => {
+  const COLUMNS = 'topic, opted_in, frequency, changed_at';
+  const row = {
+    topic: 'nearby_digest',
+    opted_in: true,
+    frequency: 'monthly',
+    changed_at: '2026-10-25T10:00:00Z',
+  };
+  const pref = {
+    topic: 'nearby_digest',
+    optedIn: true,
+    frequency: 'monthly',
+    changedAt: '2026-10-25T10:00:00Z',
+  };
+
+  it('lists the stored choices', async () => {
+    const { client, from, calls } = fakeClient({ data: [row] });
+    expect(await createRepo(client).listContact()).toEqual([pref]);
+    expect(from).toHaveBeenCalledWith('contact_preferences');
+    expect(calls).toEqual([['select', [COLUMNS]]]);
+  });
+
+  it('saves one choice and returns it with the server’s change time', async () => {
+    const { client, calls } = fakeClient({ data: row });
+    const saved = await createRepo(client).saveContact('user-1', 'nearby_digest', {
+      optedIn: true,
+      frequency: 'monthly',
+    });
+    expect(saved).toEqual(pref);
+    expect(calls).toEqual([
+      [
+        'upsert',
+        [
+          { profile_id: 'user-1', topic: 'nearby_digest', opted_in: true, frequency: 'monthly' },
+          { onConflict: 'profile_id,topic' },
+        ],
+      ],
+      ['select', [COLUMNS]],
+      ['single', []],
+    ]);
+  });
+
+  it('throws contact errors', async () => {
+    const error = { message: 'nope' };
+    const repo = createRepo(fakeClient({ error }).client);
+    await expect(repo.listContact()).rejects.toBe(error);
+    await expect(
+      repo.saveContact('u', 'product_news', { optedIn: true, frequency: null }),
+    ).rejects.toBe(error);
+  });
+});
