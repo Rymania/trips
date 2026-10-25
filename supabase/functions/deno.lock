@@ -71,6 +71,18 @@
   },
   "workspace": {
     "members": {
+      "delete-account": {
+        "dependencies": [
+          "jsr:@std/assert@1",
+          "npm:@supabase/supabase-js@2.118.0"
+        ]
+      },
+      "export-data": {
+        "dependencies": [
+          "jsr:@std/assert@1",
+          "npm:@supabase/supabase-js@2.118.0"
+        ]
+      },
       "unsubscribe": {
         "dependencies": [
           "jsr:@std/assert@1",

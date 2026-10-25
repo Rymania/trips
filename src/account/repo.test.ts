@@ -20,7 +20,16 @@ function fakeClient(result: { data?: unknown; error?: unknown } = {}) {
   }
   const from = vi.fn(() => builder);
   const auth = { updateUser: vi.fn(async () => ({ data: {}, error: result.error ?? null })) };
-  return { client: { from, auth } as unknown as TripsClient, from, auth, calls };
+  const functions = {
+    invoke: vi.fn(async () => ({ data: result.data ?? null, error: result.error ?? null })),
+  };
+  return {
+    client: { from, auth, functions } as unknown as TripsClient,
+    from,
+    auth,
+    functions,
+    calls,
+  };
 }
 
 describe('repo: saved trips', () => {
@@ -334,5 +343,32 @@ describe('repo: contact preferences', () => {
     await expect(
       repo.saveContact('u', 'product_news', { optedIn: true, frequency: null }),
     ).rejects.toBe(error);
+  });
+});
+
+describe('repo: your data', () => {
+  it('downloads the export from its Edge Function', async () => {
+    const { client, functions } = fakeClient({ data: { exportedAt: 'now' } });
+    expect(await createRepo(client).exportData()).toEqual({ exportedAt: 'now' });
+    expect(functions.invoke).toHaveBeenCalledWith('export-data', { method: 'GET' });
+  });
+
+  it('deletes the account, telling a wrong email apart from other failures', async () => {
+    const ok = fakeClient();
+    expect(await createRepo(ok.client).deleteAccount('a@trips.test')).toBe('deleted');
+    expect(ok.functions.invoke).toHaveBeenCalledWith('delete-account', {
+      body: { confirmEmail: 'a@trips.test' },
+    });
+
+    const mismatch = { name: 'FunctionsHttpError', context: new Response(null, { status: 400 }) };
+    expect(await createRepo(fakeClient({ error: mismatch }).client).deleteAccount('x')).toBe(
+      'mismatch',
+    );
+
+    const down = { name: 'FunctionsHttpError', context: new Response(null, { status: 500 }) };
+    await expect(createRepo(fakeClient({ error: down }).client).deleteAccount('x')).rejects.toBe(
+      down,
+    );
+    await expect(createRepo(fakeClient({ error: down }).client).exportData()).rejects.toBe(down);
   });
 });

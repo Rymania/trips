@@ -1,4 +1,8 @@
 {
-  "workspace": ["./unsubscribe"],
-  "lint": { "rules": { "tags": ["recommended"] } }
+  "workspace": ["./unsubscribe", "./export-data", "./delete-account"],
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  }
 }

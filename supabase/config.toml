@@ -412,6 +412,14 @@ UNSUBSCRIBE_SIGNING_KEY = "local-development-only-unsubscribe-key"
 [functions.unsubscribe]
 verify_jwt = false
 
+# These check the caller's token themselves (supabase/functions/_shared/auth.ts),
+# so the gateway lets the browser's CORS preflight through.
+[functions.export-data]
+verify_jwt = false
+
+[functions.delete-account]
+verify_jwt = false
+
 [analytics]
 enabled = false
 port = 54327

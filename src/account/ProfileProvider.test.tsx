@@ -64,6 +64,8 @@ function fakeRepo(
     removeMember: vi.fn(async () => {}),
     reorderFamily: vi.fn(async () => {}),
     getProfile: vi.fn(async () => profile),
+    exportData: vi.fn(async (): Promise<unknown> => ({ exportedAt: 'now' })),
+    deleteAccount: vi.fn(async (): Promise<'deleted' | 'mismatch'> => 'deleted'),
     updateProfile: vi.fn(async () => {}),
     updateTheme: vi.fn(async () => {}),
     changeEmail: vi.fn(async () => {}),
@@ -613,5 +615,28 @@ describe('ProfileProvider: contact preferences', () => {
   it('is idle when signed out', () => {
     setup(ANON);
     expect(contactApi.status).toBe('idle');
+  });
+});
+
+describe('ProfileProvider: your data', () => {
+  it('exports and deletes through the repo', async () => {
+    const { repo } = setup(SIGNED_IN);
+    await waitFor(() => expect(profileApi.status).toBe('ready'));
+    expect(await profileApi.exportData()).toEqual({ ok: true, data: { exportedAt: 'now' } });
+    expect(await profileApi.deleteAccount('sam@trips.test')).toBe('deleted');
+    expect(repo.deleteAccount).toHaveBeenCalledWith('sam@trips.test');
+
+    repo.deleteAccount.mockResolvedValueOnce('mismatch');
+    expect(await profileApi.deleteAccount('x')).toBe('mismatch');
+    repo.deleteAccount.mockRejectedValueOnce(new Error('down'));
+    expect(await profileApi.deleteAccount('x')).toBe('failed');
+    repo.exportData.mockRejectedValueOnce(new Error('down'));
+    expect(await profileApi.exportData()).toEqual({ ok: false });
+  });
+
+  it('can do neither when signed out', async () => {
+    setup(ANON);
+    expect(await profileApi.exportData()).toEqual({ ok: false });
+    expect(await profileApi.deleteAccount('x')).toBe('failed');
   });
 });

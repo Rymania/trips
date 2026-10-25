@@ -108,10 +108,10 @@ description: 'Task list for 005 User Settings'
 
 ## Phase 9: US7, export and delete (P3)
 
-- [ ] T049 [P] [US7] Write Deno tests for `export-data` (returns only the caller's data) and `delete-account` (wrong email gives 400, then 204, then the user is gone and the rows are removed)
-- [ ] T050 [P] [US7] Write the test `DataSection.test.tsx`: the download triggers, and delete requires typing the email
-- [ ] T051 [US7] Implement the `export-data` and `delete-account` Edge Functions, with shared `auth.ts` and `errors.ts`
-- [ ] T052 [US7] Implement `DataSection.tsx`
+- [x] T049 [P] [US7] Write Deno tests for `export-data` (returns only the caller's data) and `delete-account` (wrong email gives 400, then 204, then the user is gone and the rows are removed)
+- [x] T050 [P] [US7] Write the test `DataSection.test.tsx`: the download triggers, and delete requires typing the email
+- [x] T051 [US7] Implement the `export-data` and `delete-account` Edge Functions, with shared `auth.ts` and `errors.ts`
+- [x] T052 [US7] Implement `DataSection.tsx`
 
 ---
 

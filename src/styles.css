@@ -916,6 +916,36 @@ dd {
   padding: 0;
   margin-bottom: 0.4rem;
 }
+.btn-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.btn-danger:hover {
+  background: var(--danger);
+  color: var(--bg);
+}
+.danger-zone {
+  border-top: 1px solid var(--outline-variant);
+  padding-top: var(--gap);
+}
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin: var(--gap) auto 0;
+  max-width: calc(1440px - 2 * var(--gap));
+  width: calc(100% - 2 * var(--gap));
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  border-left: 4px solid var(--primary);
+  background: var(--primary-soft);
+}
+.notice p {
+  margin: 0;
+  font-weight: 700;
+}
 .header-actions {
   display: flex;
   gap: 0.5rem;

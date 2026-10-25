@@ -69,6 +69,8 @@ export function profileApi(over: Partial<ProfileApi> = {}): ProfileApi {
     profile: profile(),
     save: vi.fn(async () => true),
     saveTheme: vi.fn(async () => true),
+    exportData: vi.fn(async () => ({ ok: true as const, data: { exportedAt: 'now' } })),
+    deleteAccount: vi.fn(async () => 'deleted' as const),
     changeEmail: vi.fn(async () => ({ ok: true as const })),
     reload: vi.fn(),
     ...over,

@@ -128,6 +128,25 @@ export function createRepo(client: TripsClient) {
       check(await client.from('profiles').update({ theme }).eq('id', id));
     },
 
+    /** Everything stored about the caller, from the export-data Edge Function. */
+    async exportData(): Promise<unknown> {
+      const { data, error } = await client.functions.invoke('export-data', { method: 'GET' });
+      if (error) throw error;
+      return data;
+    },
+
+    /**
+     * Permanently deletes the account (delete-account Edge Function).
+     * 'mismatch' when the typed email isn't the account's; other failures throw.
+     */
+    async deleteAccount(confirmEmail: string): Promise<'deleted' | 'mismatch'> {
+      const { error } = await client.functions.invoke('delete-account', { body: { confirmEmail } });
+      if (!error) return 'deleted';
+      const status = (error as { context?: Response }).context?.status;
+      if (status === 400) return 'mismatch';
+      throw error;
+    },
+
     /** Auth emails the new address; the change applies once that link is followed. */
     async changeEmail(email: string, redirectTo: string): Promise<void> {
       const { error } = await client.auth.updateUser({ email }, { emailRedirectTo: redirectTo });
