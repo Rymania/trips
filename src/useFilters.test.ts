@@ -50,3 +50,31 @@ describe('useFilters defaults', () => {
     expect(result.current[0].originLabel).toBe('London');
   });
 });
+
+describe('useFilters family defaults', () => {
+  const FAMILY: Partial<Filters> = { ageGroups: ['4-7'], familySize: 3, dogFriendly: true };
+
+  it('apply when the URL has no filters', () => {
+    const { result } = renderHook(() => useFilters(FAMILY));
+    expect(result.current[0]).toMatchObject(FAMILY);
+    expect(window.location.search).toBe('?age=4-7&dog=1&fam=3');
+  });
+
+  it('apply alongside a location, sort or view in the URL', () => {
+    window.history.replaceState(null, '', '/?lat=51.752&lng=-1.2577&place=Oxford&view=map');
+    const { result } = renderHook(() => useFilters({ ...FAMILY, ...BRIGHTON }));
+    expect(result.current[0]).toMatchObject({ ...FAMILY, originLabel: 'Oxford', view: 'map' });
+  });
+
+  it('are ignored entirely when the URL has any filter', () => {
+    window.history.replaceState(null, '', '/?q=zoo');
+    const { result } = renderHook(() => useFilters({ ...FAMILY, ...BRIGHTON }));
+    expect(result.current[0]).toMatchObject({
+      query: 'zoo',
+      ageGroups: [],
+      familySize: 4,
+      dogFriendly: false,
+      originLabel: 'Brighton',
+    });
+  });
+});

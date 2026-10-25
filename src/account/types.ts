@@ -32,3 +32,16 @@ export interface Profile {
 }
 
 export type ProfilePatch = Pick<Profile, 'displayName' | 'home'>;
+
+export type MemberKind = 'adult' | 'child' | 'dog';
+
+export interface FamilyMember {
+  id: string;
+  nickname: string;
+  kind: MemberKind;
+  birth: { year: number; month: number } | null; // child only
+  sortOrder: number;
+}
+
+/** What the family form edits. */
+export type MemberInput = Pick<FamilyMember, 'nickname' | 'kind' | 'birth'>;

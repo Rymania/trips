@@ -22,7 +22,7 @@ export function useProfileState(
   accounts: Accounts,
   makeRepo: MakeRepo,
 ): ProfileApi {
-  const { status, data, repo, reload, optimistic } = useAccountData(
+  const { status, data, ready, reload, optimistic } = useAccountData(
     userId,
     accounts,
     makeRepo,
@@ -44,7 +44,7 @@ export function useProfileState(
 
   const changeEmail = useCallback(
     async (email: string): Promise<AuthResult> => {
-      const r = repo.current;
+      const r = (await ready())?.repo;
       if (!r) return { ok: false, reason: 'unavailable' };
       rememberNext('/settings'); // the confirmation link lands on the auth callback
       try {
@@ -54,7 +54,7 @@ export function useProfileState(
         return { ok: false, reason: reasonFor(error) };
       }
     },
-    [repo],
+    [ready],
   );
 
   return useMemo(

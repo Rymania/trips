@@ -765,6 +765,84 @@ dd {
   border-top: 1px solid var(--outline-variant);
   padding-top: var(--gap);
 }
+.settings__section h3:focus {
+  outline: none;
+}
+.family-summary {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+  font-weight: 700;
+}
+.family-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.family-list__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+.family-list__item .member-form {
+  flex: 1;
+}
+.family-list__who {
+  display: grid;
+}
+.family-list__name {
+  font-weight: 700;
+}
+.family-list__who .meta {
+  margin: 0;
+}
+.family-list__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.btn-icon {
+  min-width: 48px;
+  padding: 0.6rem;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.member-form fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.member-form legend {
+  margin-bottom: 0.4rem;
+  padding: 0;
+}
+.member-form__birth {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 0.75rem;
+}
+.member-form__birth select {
+  width: 100%;
+}
+.settings__subhead {
+  margin: 0;
+  font-family: var(--font-headline);
+  font-size: 1.1rem;
+}
+.member-form__birth > p {
+  grid-column: 1 / -1;
+  margin: 0;
+}
 @media (min-width: 1024px) {
   .settings__layout {
     grid-template-columns: 14rem 1fr;

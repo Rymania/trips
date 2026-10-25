@@ -32,5 +32,7 @@ describe('Settings', () => {
     expect(nav).toContainElement(screen.getByRole('link', { name: 'Profile' }));
     expect(screen.getByRole('link', { name: 'Profile' })).toHaveAttribute('href', '#profile');
     expect(screen.getByRole('region', { name: 'Profile' })).toHaveAttribute('id', 'profile');
+    expect(screen.getByRole('link', { name: 'Family' })).toHaveAttribute('href', '#family');
+    expect(screen.getByRole('region', { name: 'Family' })).toHaveAttribute('id', 'family');
   });
 });
