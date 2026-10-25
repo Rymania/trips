@@ -98,6 +98,7 @@ A user chooses Light, Dark or "Match my device" for the app's theme, and the cho
 2. **Given** an anonymous visitor, **When** they choose a theme, **Then** it is remembered on this device.
 3. **Given** a signed-in user, **When** they choose a theme, **Then** it is stored on their account and applied on any device they sign in on.
 4. **Given** a stored theme, **When** the page loads, **Then** it is applied before first paint with no flash of the other theme.
+5. **Given** a visitor who chose Light or Dark on this device, **When** they sign in to an account still on the default ("Match my device"), **Then** their choice is saved to the account rather than replaced.
 
 ---
 

@@ -60,3 +60,23 @@ test('a signed-in theme follows the account to another device (US5)', async ({ b
   await second.reload();
   await expect(second.locator('html')).toHaveAttribute('data-theme', 'dark');
 });
+
+test('a theme chosen before signing up is kept by the new account (US5)', async ({ browser }) => {
+  const email = uniqueEmail('theme-new');
+  const first = await (await browser.newContext({ colorScheme: 'light' })).newPage();
+  await first.goto('/');
+  await first.getByRole('button', { name: 'Theme' }).click();
+  await first.getByRole('radio', { name: 'Dark' }).check();
+  await first.keyboard.press('Escape');
+  await signIn(first, email);
+  await first.goto('/settings#appearance');
+  const appearance = first.getByRole('region', { name: 'Appearance' });
+  await expect(appearance.getByRole('radio', { name: 'Dark' })).toBeChecked();
+  await expect(first.locator('html')).toHaveAttribute('data-theme', 'dark');
+
+  // Saved to the account, so another device picks it up.
+  const second = await (await browser.newContext({ colorScheme: 'light' })).newPage();
+  await second.goto('/');
+  await signIn(second, email);
+  await expect(second.locator('html')).toHaveAttribute('data-theme', 'dark');
+});

@@ -499,6 +499,33 @@ describe('ProfileProvider: theme', () => {
     expect(localStorage.getItem('trips.theme')).toBe('dark');
   });
 
+  it('copies this device’s choice to an account still on the default theme', async () => {
+    localStorage.setItem('trips.theme', 'dark');
+    const { repo } = setup(SIGNED_IN, fakeRepo([], { ...PROFILE, theme: 'system' }));
+    await waitFor(() => expect(profileApi.status).toBe('ready'));
+    expect(repo.updateTheme).toHaveBeenCalledWith('user-1', 'dark');
+    expect(profileApi.profile?.theme).toBe('dark');
+    expect(themeApi.preference).toBe('dark');
+    expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('leaves the default alone when this device follows the device setting too', async () => {
+    const { repo } = setup(SIGNED_IN, fakeRepo([], { ...PROFILE, theme: 'system' }));
+    await waitFor(() => expect(profileApi.status).toBe('ready'));
+    expect(repo.updateTheme).not.toHaveBeenCalled();
+    expect(themeApi.preference).toBe('system');
+  });
+
+  it('falls back to the account’s default if copying the choice fails', async () => {
+    localStorage.setItem('trips.theme', 'dark');
+    const repo = fakeRepo([], { ...PROFILE, theme: 'system' });
+    repo.updateTheme.mockRejectedValueOnce(new Error('offline'));
+    setup(SIGNED_IN, repo);
+    await waitFor(() => expect(profileApi.status).toBe('ready'));
+    expect(profileApi.profile?.theme).toBe('system');
+    expect(themeApi.preference).toBe('system');
+  });
+
   it('saves a signed-in choice to the account, undoing it if that fails', async () => {
     const { repo } = setup(SIGNED_IN);
     await waitFor(() => expect(profileApi.status).toBe('ready'));
