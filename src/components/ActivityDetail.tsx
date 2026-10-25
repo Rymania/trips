@@ -3,6 +3,7 @@ import { estimateFamilyCost, formatCost } from '../domain/filters';
 import { haversineKm } from '../domain/geo';
 import type { Activity, Filters } from '../domain/types';
 import { t } from '../i18n';
+import { Link } from '../routes/Link';
 import { ageLabel, dogLabel, ratingLabel } from './ActivityCard';
 
 interface Props {
@@ -10,7 +11,10 @@ interface Props {
   all: Activity[];
   filters: Filters;
   saved: boolean;
-  onToggleSave: (id: string) => void;
+  /** Anonymous saves only last for this visit; offer to sign in to keep them. */
+  offerSignIn?: boolean;
+  saveFailed?: boolean;
+  onToggleSave: (activity: Activity) => void;
   onOpen: (id: string) => void;
   onClose: () => void;
 }
@@ -36,6 +40,8 @@ export function ActivityDetail({
   all,
   filters,
   saved,
+  offerSignIn = false,
+  saveFailed = false,
   onToggleSave,
   onOpen,
   onClose,
@@ -113,15 +119,9 @@ export function ActivityDetail({
             {t.website}
           </a>
         )}
-        <button
-          type="button"
-          className="btn"
-          aria-pressed={saved}
-          onClick={() => onToggleSave(a.id)}
-        >
-          {saved ? `♥ ${t.saved}` : `♡ ${t.save}`}
-        </button>
+        <SaveButton saved={saved} onClick={() => onToggleSave(a)} />
       </p>
+      <SaveNotes saved={saved} offerSignIn={offerSignIn} saveFailed={saveFailed} />
       <section aria-labelledby="related-title">
         <h3 id="related-title">{t.related}</h3>
         <ul className="related">
@@ -135,5 +135,37 @@ export function ActivityDetail({
         </ul>
       </section>
     </dialog>
+  );
+}
+
+function SaveButton({ saved, onClick }: { saved: boolean; onClick: () => void }) {
+  return (
+    <button type="button" className="btn" aria-pressed={saved} onClick={onClick}>
+      {saved ? `♥ ${t.saved}` : `♡ ${t.save}`}
+    </button>
+  );
+}
+
+/** A failed save, or the prompt to sign in so an anonymous save outlasts the visit. */
+function SaveNotes({
+  saved,
+  offerSignIn,
+  saveFailed,
+}: Pick<Props, 'saved' | 'offerSignIn' | 'saveFailed'>) {
+  const here = `${window.location.pathname}${window.location.search}`;
+  return (
+    <>
+      {saveFailed && (
+        <p role="alert" className="error-text">
+          {t.saveFailed}
+        </p>
+      )}
+      {saved && offerSignIn && (
+        <p className="hint">
+          {t.keepSaved}{' '}
+          <Link to={`/sign-in?next=${encodeURIComponent(here)}`}>{t.keepSavedLink}</Link>
+        </p>
+      )}
+    </>
   );
 }

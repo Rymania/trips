@@ -59,13 +59,13 @@ description: 'Task list for 005 User Settings'
 
 ## Phase 4: US2, saved trips (P1)
 
-- [ ] T025 [P] [US2] Write the test `src/account/savedMerge.test.ts`: merges with no duplicates and keeps existing notes and dates
-- [ ] T026 [P] [US2] Write the test `src/routes/SavedTrips.test.tsx`: ordering, editing the planned date and note, "No longer available", removing, and the empty state
-- [ ] T027 [P] [US2] Add the end-to-end test "saved trip appears on a second browser context"
-- [ ] T028 [US2] Implement the saved trip functions in `src/account/repo.ts` and the state in `src/account/ProfileProvider.tsx`, updating the screen straight away and rolling back on error
-- [ ] T029 [US2] Implement `src/account/savedMerge.ts` and run it on `SIGNED_IN`
-- [ ] T030 [US2] Switch saving in `ActivityDetail` to the provider when signed in, keep `sessionStorage` otherwise, and add the "sign in to keep" prompt
-- [ ] T031 [US2] Implement `src/routes/SavedTrips.tsx`
+- [x] T025 [P] [US2] Write the test `src/account/savedMerge.test.ts`: merges with no duplicates and keeps existing notes and dates
+- [x] T026 [P] [US2] Write the test `src/routes/SavedTrips.test.tsx`: ordering, editing the planned date and note, "No longer available", removing, and the empty state
+- [x] T027 [P] [US2] Add the end-to-end test "saved trip appears on a second browser context"
+- [x] T028 [US2] Implement the saved trip functions in `src/account/repo.ts` and the state in `src/account/ProfileProvider.tsx`, updating the screen straight away and rolling back on error
+- [x] T029 [US2] Implement `src/account/savedMerge.ts` and run it on `SIGNED_IN`
+- [x] T030 [US2] Switch saving in `ActivityDetail` to the provider when signed in, keep `sessionStorage` otherwise, and add the "sign in to keep" prompt
+- [x] T031 [US2] Implement `src/routes/SavedTrips.tsx`
 
 ---
 

@@ -1,12 +1,13 @@
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
-import { AuthProvider } from './account/AuthProvider';
+import { AuthProvider, useAuth } from './account/AuthProvider';
+import { ProfileProvider, useSaved } from './account/ProfileProvider';
 import { AccountMenu } from './components/AccountMenu';
 import { ActiveFilters } from './components/ActiveFilters';
 import { ActivityDetail } from './components/ActivityDetail';
 import { FilterPanel } from './components/FilterPanel';
 import { ResultsList } from './components/ResultsList';
 import { applyFilters } from './domain/filters';
-import type { SortKey, ViewMode } from './domain/types';
+import type { Activity, SortKey, ViewMode } from './domain/types';
 import { t } from './i18n';
 import { useActivities } from './useActivities';
 import { useFilters } from './useFilters';
@@ -17,7 +18,7 @@ const MapView = lazy(() => import('./components/MapView'));
 const pages: Partial<Record<RouteName, React.LazyExoticComponent<() => React.JSX.Element>>> = {
   signIn: lazy(() => import('./routes/SignIn')),
   authCallback: lazy(() => import('./routes/AuthCallback')),
-  saved: lazy(() => import('./routes/Placeholder')),
+  saved: lazy(() => import('./routes/SavedTrips')),
   settings: lazy(() => import('./routes/Placeholder')),
 };
 
@@ -29,36 +30,28 @@ const SORTS: [SortKey, string][] = [
   ['name', t.sortName],
 ];
 
-function loadSaved(): string[] {
-  try {
-    return JSON.parse(sessionStorage.getItem('saved') ?? '[]') as string[];
-  } catch {
-    return [];
-  }
-}
-
 function SearchPage() {
   const [filters, update] = useFilters();
   const { activities, failed, loading, error, reload } = useActivities();
   const [openId, setOpenId] = useState<string | null>(null);
-  const [saved, setSaved] = useState<string[]>(loadSaved);
+  const { state } = useAuth();
+  const saved = useSaved();
+  const [saveFailed, setSaveFailed] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
 
   const results = useMemo(() => applyFilters(activities, filters), [activities, filters]);
   const open = activities.find((a) => a.id === openId) ?? null;
 
-  const toggleSave = useCallback((id: string) => {
-    setSaved((s) => {
-      const next = s.includes(id) ? s.filter((x) => x !== id) : [...s, id];
-      try {
-        sessionStorage.setItem('saved', JSON.stringify(next));
-      } catch {
-        /* storage unavailable */
-      }
-      return next;
-    });
+  const { toggle } = saved;
+  const toggleSave = useCallback(
+    async (a: Activity) => setSaveFailed(!(await toggle({ id: a.id, name: a.name }))),
+    [toggle],
+  );
+  const openActivity = useCallback((id: string | null) => {
+    setSaveFailed(false);
+    setOpenId(id);
   }, []);
-  const close = useCallback(() => setOpenId(null), []);
+  const close = useCallback(() => openActivity(null), [openActivity]);
 
   return (
     <>
@@ -132,10 +125,10 @@ function SearchPage() {
                 </div>
               }
             >
-              <MapView results={results} origin={filters.origin} onOpen={setOpenId} />
+              <MapView results={results} origin={filters.origin} onOpen={openActivity} />
             </Suspense>
           ) : (
-            <ResultsList results={results} familySize={filters.familySize} onOpen={setOpenId} />
+            <ResultsList results={results} familySize={filters.familySize} onOpen={openActivity} />
           )}
         </main>
       </div>
@@ -144,9 +137,11 @@ function SearchPage() {
           activity={open}
           all={activities}
           filters={filters}
-          saved={saved.includes(open.id)}
-          onToggleSave={toggleSave}
-          onOpen={setOpenId}
+          saved={saved.isSaved(open.id)}
+          offerSignIn={state.status === 'anonymous'}
+          saveFailed={saveFailed}
+          onToggleSave={(a) => void toggleSave(a)}
+          onOpen={openActivity}
           onClose={close}
         />
       )}
@@ -194,7 +189,9 @@ function Shell() {
 export default function App() {
   return (
     <AuthProvider>
-      <Shell />
+      <ProfileProvider>
+        <Shell />
+      </ProfileProvider>
     </AuthProvider>
   );
 }
