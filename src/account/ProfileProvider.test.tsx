@@ -4,9 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeAccounts } from '../test/fakeAuthClient';
 import { AuthContext, type AuthApi, type AuthState } from './AuthProvider';
 import type { TripsClient } from './client';
-import { ProfileProvider, useSaved, type SavedApi } from './ProfileProvider';
+import {
+  ProfileProvider,
+  useProfile,
+  useSaved,
+  type ProfileApi,
+  type SavedApi,
+} from './ProfileProvider';
 import type { Repo } from './repo';
-import type { SavedTrip } from './types';
+import type { Profile, SavedTrip } from './types';
 
 const trip = (id: string, over: Partial<SavedTrip> = {}): SavedTrip => ({
   activityId: id,
@@ -17,8 +23,13 @@ const trip = (id: string, over: Partial<SavedTrip> = {}): SavedTrip => ({
   ...over,
 });
 
-function fakeRepo(initial: SavedTrip[] = []) {
+const PROFILE: Profile = { id: 'user-1', displayName: 'Sam', home: null, theme: 'system' };
+
+function fakeRepo(initial: SavedTrip[] = [], profile: Profile = PROFILE) {
   return {
+    getProfile: vi.fn(async () => profile),
+    updateProfile: vi.fn(async () => {}),
+    changeEmail: vi.fn(async () => {}),
     listSaved: vi.fn(async () => initial),
     addSaved: vi.fn(async () => {}),
     updateSaved: vi.fn(async () => {}),
@@ -33,10 +44,13 @@ const SIGNED_IN: AuthState = {
 };
 
 let api!: SavedApi;
+let profileApi!: ProfileApi;
 function Probe() {
   const value = useSaved();
+  const prof = useProfile();
   useEffect(() => {
     api = value;
+    profileApi = prof;
   });
   return null;
 }
@@ -70,7 +84,10 @@ function setup(
 
 const ids = () => api.items.map((i) => i.activityId).sort();
 
-beforeEach(() => sessionStorage.clear());
+beforeEach(() => {
+  sessionStorage.clear();
+  localStorage.clear();
+});
 
 describe('ProfileProvider: saved trips', () => {
   it('keeps anonymous saves in sessionStorage', async () => {
@@ -205,5 +222,86 @@ describe('ProfileProvider: saved trips', () => {
   it('throws when used outside the provider', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => render(<Probe />)).toThrow(/inside <ProfileProvider>/);
+  });
+
+  it('shows saves made after a failed merge once signed out again', async () => {
+    sessionStorage.setItem('saved', JSON.stringify([{ activityId: 'a', activityName: 'Aye' }]));
+    const repo = fakeRepo();
+    repo.addSaved.mockRejectedValue(new Error('offline'));
+    const { rerender } = setup(SIGNED_IN, repo);
+    await waitFor(() => expect(api.status).toBe('error'));
+    rerender(ANON);
+    expect(api.isSaved('a')).toBe(true);
+  });
+});
+
+describe('ProfileProvider: profile', () => {
+  it('is idle when signed out', () => {
+    setup(ANON);
+    expect(profileApi.status).toBe('idle');
+    expect(profileApi.profile).toBeNull();
+  });
+
+  it('loads the profile once signed in', async () => {
+    const { repo } = setup(SIGNED_IN);
+    await waitFor(() => expect(profileApi.status).toBe('ready'));
+    expect(repo.getProfile).toHaveBeenCalledWith('user-1');
+    expect(profileApi.profile?.displayName).toBe('Sam');
+  });
+
+  it('saves straight away and rolls back on failure', async () => {
+    const { repo } = setup(SIGNED_IN);
+    await waitFor(() => expect(profileApi.status).toBe('ready'));
+    const home = { name: 'Brighton', lat: 50.8225, lng: -0.1372 };
+
+    let ok: boolean | undefined;
+    await act(async () => {
+      ok = await profileApi.save({ displayName: 'Sammy', home });
+    });
+    expect(ok).toBe(true);
+    expect(repo.updateProfile).toHaveBeenCalledWith('user-1', { displayName: 'Sammy', home });
+    expect(profileApi.profile).toMatchObject({ displayName: 'Sammy', home });
+
+    repo.updateProfile.mockRejectedValueOnce(new Error('offline'));
+    await act(async () => {
+      ok = await profileApi.save({ displayName: 'Lost', home: null });
+    });
+    expect(ok).toBe(false);
+    expect(profileApi.profile).toMatchObject({ displayName: 'Sammy', home });
+  });
+
+  it('reports a load failure and retries', async () => {
+    const repo = fakeRepo();
+    repo.getProfile.mockRejectedValueOnce(new Error('offline'));
+    setup(SIGNED_IN, repo);
+    await waitFor(() => expect(profileApi.status).toBe('error'));
+    act(() => profileApi.reload());
+    await waitFor(() => expect(profileApi.status).toBe('ready'));
+  });
+
+  it('changes the email, returning to settings after confirming', async () => {
+    const { repo } = setup(SIGNED_IN);
+    await waitFor(() => expect(profileApi.status).toBe('ready'));
+    expect(await profileApi.changeEmail(' New@Trips.test ')).toEqual({ ok: true });
+    expect(repo.changeEmail).toHaveBeenCalledWith(
+      'new@trips.test',
+      `${window.location.origin}/auth/callback`,
+    );
+    expect(localStorage.getItem('trips.signInNext')).toBe('/settings');
+
+    repo.changeEmail.mockRejectedValueOnce({ status: 429, code: 'over_email_send_rate_limit' });
+    expect(await profileApi.changeEmail('x@trips.test')).toEqual({
+      ok: false,
+      reason: 'rateLimited',
+    });
+  });
+
+  it('cannot change the email before the profile loads', async () => {
+    setup(ANON);
+    expect(await profileApi.changeEmail('x@trips.test')).toEqual({
+      ok: false,
+      reason: 'unavailable',
+    });
+    expect(await profileApi.save({ displayName: 'x', home: null })).toBe(false);
   });
 });

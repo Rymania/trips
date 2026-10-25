@@ -1,9 +1,10 @@
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthContext, type AuthApi, type AuthState } from '../account/AuthProvider';
-import { SavedContext, type SavedApi } from '../account/ProfileProvider';
+import type { AuthState } from '../account/AuthProvider';
+import type { SavedApi } from '../account/ProfileProvider';
 import type { SavedTrip } from '../account/types';
+import { profile, renderWithAccount } from '../test/contexts';
 import SavedTrips from './SavedTrips';
 
 const trip = (id: string, over: Partial<SavedTrip> = {}): SavedTrip => ({
@@ -21,32 +22,7 @@ const SIGNED_IN: AuthState = {
 };
 
 function renderPage(saved: Partial<SavedApi> = {}, state: AuthState = SIGNED_IN) {
-  const auth: AuthApi = {
-    state,
-    connect: vi.fn(),
-    sendCode: vi.fn(),
-    verifyCode: vi.fn(),
-    signOut: vi.fn(),
-  };
-  const api: SavedApi = {
-    persistent: state.status === 'signedIn',
-    status: 'ready',
-    items: [],
-    isSaved: () => false,
-    toggle: vi.fn(async () => true),
-    update: vi.fn(async () => true),
-    remove: vi.fn(async () => true),
-    reload: vi.fn(),
-    ...saved,
-  };
-  render(
-    <AuthContext.Provider value={auth}>
-      <SavedContext.Provider value={api}>
-        <SavedTrips />
-      </SavedContext.Provider>
-    </AuthContext.Provider>,
-  );
-  return api;
+  return renderWithAccount(<SavedTrips />, { auth: state, saved }).saved;
 }
 
 const headings = () => screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
@@ -156,5 +132,20 @@ describe('SavedTrips', () => {
 
     await user.click(card.getByRole('button', { name: /^Remove/ }));
     expect(card.getByRole('alert')).toHaveTextContent('couldn’t remove');
+  });
+
+  it('shows the distance from the home location when there is one', async () => {
+    renderWithAccount(<SavedTrips />, {
+      saved: { items: [trip('sample-1')] },
+      profile: { profile: profile({ home: { name: 'London', lat: 51.5074, lng: -0.1278 } }) },
+    });
+    const card = within(await screen.findByRole('listitem'));
+    expect(await card.findByText(/km away/)).toHaveTextContent('Saved 1 Oct 2026 · 3.6 km away');
+  });
+
+  it('leaves out the distance without a home location', async () => {
+    renderWithAccount(<SavedTrips />, { saved: { items: [trip('sample-1')] } });
+    await screen.findByRole('heading', { level: 3, name: 'Natural History Museum' });
+    expect(screen.queryByText(/km away/)).not.toBeInTheDocument();
   });
 });

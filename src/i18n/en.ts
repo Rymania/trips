@@ -71,8 +71,6 @@ export const en = {
   skipToResults: 'Skip to results',
   skipToContent: 'Skip to content',
   pageLoading: 'Loading…',
-  comingSoonTitle: 'Coming soon',
-  comingSoon: 'This page is part of the accounts update and isn’t ready yet.',
   backToSearch: 'Back to search',
 
   // Accounts (spec 005)
@@ -130,4 +128,28 @@ export const en = {
   removeSavedNamed: (name: string) => `Remove ${name}`,
   removeFailed: 'We couldn’t remove this trip. Please try again.',
   noLongerAvailable: 'No longer available',
+
+  // Settings and profile (spec 005 US4)
+  settingsSignedOut: 'Sign in to manage your profile and preferences.',
+  settingsSections: 'Settings sections',
+  profile: 'Profile',
+  profileLoadFailed: 'We couldn’t load your profile.',
+  yourDetails: 'Your details',
+  displayName: 'Display name',
+  displayNameHint: 'Shown in the account menu.',
+  displayNameInvalid: 'Enter a name of 1 to 50 characters.',
+  homeLocation: 'Home location',
+  homeLocationHint:
+    'Searches start here unless a link sets a location. Leave it empty to start from London.',
+  saveDetails: 'Save details',
+  detailsSaved: 'Details saved',
+  detailsFailed: 'We couldn’t save your details. Please try again.',
+  signInEmail: 'Sign-in email',
+  currentEmail: 'Current email:',
+  newEmail: 'New email address',
+  changeEmail: 'Change email',
+  emailUnchanged: 'That’s already your email address.',
+  emailChangeSent: (next: string, current: string) =>
+    `Check ${next} and follow the link to confirm. Until then, keep signing in with ${current}, which we’ll also tell about the change.`,
+  emailChangeFailed: 'We couldn’t change your email. The address may already be in use.',
 } as const;

@@ -1,13 +1,13 @@
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 import { AuthProvider, useAuth } from './account/AuthProvider';
-import { ProfileProvider, useSaved } from './account/ProfileProvider';
+import { ProfileProvider, useProfile, useSaved } from './account/ProfileProvider';
 import { AccountMenu } from './components/AccountMenu';
 import { ActiveFilters } from './components/ActiveFilters';
 import { ActivityDetail } from './components/ActivityDetail';
 import { FilterPanel } from './components/FilterPanel';
 import { ResultsList } from './components/ResultsList';
 import { applyFilters } from './domain/filters';
-import type { Activity, SortKey, ViewMode } from './domain/types';
+import type { Activity, Filters, SortKey, ViewMode } from './domain/types';
 import { t } from './i18n';
 import { useActivities } from './useActivities';
 import { useFilters } from './useFilters';
@@ -19,7 +19,7 @@ const pages: Partial<Record<RouteName, React.LazyExoticComponent<() => React.JSX
   signIn: lazy(() => import('./routes/SignIn')),
   authCallback: lazy(() => import('./routes/AuthCallback')),
   saved: lazy(() => import('./routes/SavedTrips')),
-  settings: lazy(() => import('./routes/Placeholder')),
+  settings: lazy(() => import('./routes/settings/Settings')),
 };
 
 const SORTS: [SortKey, string][] = [
@@ -30,8 +30,21 @@ const SORTS: [SortKey, string][] = [
   ['name', t.sortName],
 ];
 
+/** Per-user search defaults: searches start from home when the URL has no location. */
+function useSearchDefaults(): Partial<Filters> | null {
+  const home = useProfile().profile?.home;
+  const { name, lat, lng } = home ?? {};
+  return useMemo(
+    () =>
+      name !== undefined && lat !== undefined && lng !== undefined
+        ? { origin: { lat, lng }, originLabel: name }
+        : null,
+    [name, lat, lng],
+  );
+}
+
 function SearchPage() {
-  const [filters, update] = useFilters();
+  const [filters, update] = useFilters(useSearchDefaults());
   const { activities, failed, loading, error, reload } = useActivities();
   const [openId, setOpenId] = useState<string | null>(null);
   const { state } = useAuth();

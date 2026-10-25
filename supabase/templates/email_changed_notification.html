@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <body
+    style="
+      margin: 0;
+      padding: 24px;
+      background: #faf6f0;
+      color: #2e3230;
+      font-family: 'Nunito Sans', system-ui, sans-serif;
+      line-height: 1.6;
+    "
+  >
+    <div
+      style="
+        max-width: 480px;
+        margin: 0 auto;
+        background: #f3ede3;
+        border-radius: 12px;
+        padding: 24px;
+      "
+    >
+      <h1
+        style="
+          font-family: Literata, Georgia, serif;
+          color: #3d6a4b;
+          font-size: 22px;
+          margin: 0 0 12px;
+        "
+      >
+        Your sign-in email has changed
+      </h1>
+      <p style="margin: 0 0 16px">
+        Your Family Day Planner account now signs in with {{ .Email }} instead of {{ .OldEmail }}.
+      </p>
+      <p style="margin: 0; font-size: 14px; color: #5c5f55">
+        If you didn't make this change, contact us straight away so we can secure your account.
+      </p>
+    </div>
+  </body>
+</html>
