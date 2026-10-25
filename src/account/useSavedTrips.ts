@@ -92,8 +92,9 @@ export function useSavedTrips(
         plannedFor: null,
         note: null,
       };
+      // The list may still be loading, so it can turn out to hold this trip already.
       return optimistic(
-        (list) => [...list, trip],
+        (list) => (list.some((i) => i.activityId === id) ? list : [...list, trip]),
         (list) => list.filter((i) => i !== trip),
         (r) => r.addSaved(userId, [save]),
       );

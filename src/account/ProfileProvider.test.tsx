@@ -189,6 +189,25 @@ describe('ProfileProvider: saved trips', () => {
     expect(api.isSaved('b')).toBe(false);
   });
 
+  it('saves made while the list is still loading wait for it, without duplicates', async () => {
+    let finish!: (trips: SavedTrip[]) => void;
+    const repo = fakeRepo();
+    repo.listSaved.mockReturnValueOnce(new Promise((r) => (finish = r)));
+    setup(SIGNED_IN, repo);
+    expect(api.status).toBe('loading');
+
+    let saving!: Promise<boolean>;
+    act(() => {
+      saving = api.toggle({ id: 'a', name: 'Aye' });
+    });
+    await act(async () => finish([trip('a')]));
+    expect(await saving).toBe(true);
+    expect(repo.addSaved).toHaveBeenCalledWith('user-1', [
+      { activityId: 'a', activityName: 'Aye' },
+    ]);
+    expect(api.items.map((i) => i.activityId)).toEqual(['a']);
+  });
+
   it('toggling a saved activity removes it from the account', async () => {
     const { repo } = setup(SIGNED_IN, fakeRepo([trip('a')]));
     await waitFor(() => expect(api.status).toBe('ready'));
@@ -421,6 +440,21 @@ describe('ProfileProvider: family', () => {
 
     expect(await familyApi.move('a', -1)).toBe(false); // already first
     expect(await familyApi.move('b', 1)).toBe(false); // already last
+  });
+
+  it('adds a member while the family is still loading, once it has loaded', async () => {
+    let finish!: (members: FamilyMember[]) => void;
+    const repo = fakeRepo();
+    repo.listFamily.mockReturnValueOnce(new Promise((r) => (finish = r)));
+    setup(SIGNED_IN, repo);
+
+    let adding!: Promise<boolean>;
+    act(() => {
+      adding = familyApi.add({ nickname: 'Rex', kind: 'dog', birth: null });
+    });
+    await act(async () => finish([member('a', 0)]));
+    expect(await adding).toBe(true);
+    expect(repo.addMember).toHaveBeenCalledWith('user-1', expect.anything(), 1);
   });
 
   it('cannot change anything before the family loads', async () => {

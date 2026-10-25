@@ -30,9 +30,12 @@ export function useAccountData<T>(
   const key = userId && `${userId}#${attempt}`;
   const [loaded, setLoaded] = useState<Loaded<T> | null>(null);
   const repo = useRef<Repo | null>(null);
+  /** The load in progress, resolving to its data (null if it failed or was superseded). */
+  const pending = useRef<Promise<T | null> | null>(null);
 
   useEffect(() => {
     repo.current = null;
+    pending.current = null;
     if (!userId || !key) return;
     let live = true;
     const run = async () => {
@@ -41,14 +44,16 @@ export function useAccountData<T>(
       const r = makeRepo(client);
       return { r, data: await load(r, userId) };
     };
-    run().then(
+    pending.current = run().then(
       ({ r, data }) => {
-        if (!live) return;
+        if (!live) return null;
         repo.current = r;
         setLoaded({ key, status: 'ready', data });
+        return data;
       },
       () => {
         if (live) setLoaded({ key, status: 'error', data: null });
+        return null;
       },
     );
     return () => {
@@ -67,10 +72,20 @@ export function useAccountData<T>(
   );
   const reload = useCallback(() => setAttempt((n) => n + 1), []);
 
+  /**
+   * The repo for writes, waiting for a load in progress so that a change made
+   * straight after sign-in isn't lost. `loaded` is that load's data when it
+   * had to wait (the caller's copy is then out of date), otherwise null.
+   */
+  const ready = useCallback(async (): Promise<{ repo: Repo; loaded: T | null } | null> => {
+    const loaded = !repo.current && pending.current ? await pending.current : null;
+    return repo.current ? { repo: repo.current, loaded } : null;
+  }, []);
+
   /** Applies a change on screen, writes it, and undoes the change if the write fails. */
   const optimistic = useCallback(
     async (change: (d: T) => T, undo: (d: T) => T, write: (r: Repo) => Promise<void>) => {
-      const r = repo.current;
+      const r = (await ready())?.repo;
       if (!r) return false;
       setData(change);
       try {
@@ -81,8 +96,8 @@ export function useAccountData<T>(
         return false;
       }
     },
-    [setData],
+    [ready, setData],
   );
 
-  return { status, data, repo, reload, optimistic, setData };
+  return { status, data, ready, reload, optimistic, setData };
 }

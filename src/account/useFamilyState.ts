@@ -28,7 +28,7 @@ export function useFamilyState(
   accounts: Accounts,
   makeRepo: MakeRepo,
 ): FamilyApi {
-  const { status, data, repo, reload, optimistic, setData } = useAccountData(
+  const { status, data, ready, reload, optimistic, setData } = useAccountData(
     userId,
     accounts,
     makeRepo,
@@ -39,18 +39,19 @@ export function useFamilyState(
   // Adding waits for the database, which assigns the ID and enforces the limit of 20.
   const add = useCallback(
     async (m: MemberInput) => {
-      const r = repo.current;
+      const r = userId ? await ready() : null;
       if (!userId || !r) return false;
-      const next = Math.max(-1, ...members.map((x) => x.sortOrder)) + 1;
+      const current = r.loaded ?? members;
+      const next = Math.max(-1, ...current.map((x) => x.sortOrder)) + 1;
       try {
-        const added = await r.addMember(userId, m, next);
+        const added = await r.repo.addMember(userId, m, next);
         setData((list) => [...list, added]);
         return true;
       } catch {
         return false;
       }
     },
-    [userId, members, repo, setData],
+    [userId, members, ready, setData],
   );
 
   const update = useCallback(
