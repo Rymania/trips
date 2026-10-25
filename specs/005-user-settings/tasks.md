@@ -99,10 +99,10 @@ description: 'Task list for 005 User Settings'
 
 ## Phase 8: US6, contact preferences (P3)
 
-- [ ] T045 [P] [US6] Write the test `ContactSection.test.tsx`: everything off by default, the frequency only shown for the digest, and the changed time updating
-- [ ] T046 [P] [US6] Write a Deno test for `supabase/functions/unsubscribe`: a valid signature turns the option off, a changed signature returns 400, and the POST one-click flow works
-- [ ] T047 [US6] Implement `ContactSection.tsx` and the preference functions in `repo.ts`
-- [ ] T048 [US6] Implement the `unsubscribe` Edge Function and a shared `signUnsubscribe()` helper, to be used by the future email feature
+- [x] T045 [P] [US6] Write the test `ContactSection.test.tsx`: everything off by default, the frequency only shown for the digest, and the changed time updating
+- [x] T046 [P] [US6] Write a Deno test for `supabase/functions/unsubscribe`: a valid signature turns the option off, a changed signature returns 400, and the POST one-click flow works
+- [x] T047 [US6] Implement `ContactSection.tsx` and the preference functions in `repo.ts`
+- [x] T048 [US6] Implement the `unsubscribe` Edge Function and a shared `signUnsubscribe()` helper, to be used by the future email feature
 
 ---
 

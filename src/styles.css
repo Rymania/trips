@@ -883,6 +883,39 @@ dd {
     border-radius: var(--radius);
   }
 }
+.contact-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.contact-list__item {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+.contact-list__item .check {
+  font-weight: 700;
+}
+.form-card .contact-list__item p {
+  margin: 0 0 0 1.85rem;
+}
+.contact-list__changed {
+  display: block;
+  font-size: 0.85rem;
+}
+.contact-list__often {
+  margin: 0.5rem 0 0 1.85rem;
+  padding: 0;
+  border: 0;
+}
+.contact-list__often legend {
+  padding: 0;
+  margin-bottom: 0.4rem;
+}
 .header-actions {
   display: flex;
   gap: 0.5rem;

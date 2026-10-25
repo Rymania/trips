@@ -45,3 +45,16 @@ export interface FamilyMember {
 
 /** What the family form edits. */
 export type MemberInput = Pick<FamilyMember, 'nickname' | 'kind' | 'birth'>;
+
+export type ContactTopic = 'product_news' | 'nearby_digest';
+export type DigestFrequency = 'weekly' | 'monthly';
+
+export interface ContactPreference {
+  topic: ContactTopic;
+  optedIn: boolean;
+  frequency: DigestFrequency | null; // nearby_digest only
+  /** When opted_in last changed; null when nothing has been stored (never opted in). */
+  changedAt: string | null;
+}
+
+export type ContactChoice = Pick<ContactPreference, 'optedIn' | 'frequency'>;

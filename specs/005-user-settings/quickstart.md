@@ -36,7 +36,7 @@ Emails sent by the local stack, including sign-in links and codes, appear in Mai
 3. **Family (US3)**: go to Settings, then Family, and add an adult, a child born 2019 and a dog. Open `/` with no query string and see the matching age group, family size 2 and dog-friendly selected.
 4. **Profile (US4)**: set a display name and home location. Distances on `/` are now measured from home.
 5. **Theme (US5)**: choose Dark, reload, and the page loads dark with no flash.
-6. **Contact preferences (US6)**: turn on the digest and choose monthly, then reload. The choice is kept.
+6. **Contact preferences (US6)**: turn on the digest and choose monthly, then reload. The choice is kept. The unsubscribe link in emails is signed with `UNSUBSCRIBE_SIGNING_KEY`: the local stack sets a development key in `supabase/config.toml`, and production needs `npx supabase secrets set UNSUBSCRIBE_SIGNING_KEY=$(openssl rand -hex 32)`.
 7. **Your data (US7)**: download the data and check the JSON, then delete the account. Signing in again creates a new, empty account.
 
 ## 4. Automated checks
@@ -44,6 +44,7 @@ Emails sent by the local stack, including sign-in links and codes, appear in Mai
 ```bash
 npm run check               # lint, format, typecheck, unit tests
 npx supabase test db        # RLS and constraint tests (pgTAP)
+npm run functions:check     # Edge Functions: Deno lint, type check and tests
 npm run e2e                 # Playwright against the local stack
 ```
 

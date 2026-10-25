@@ -35,5 +35,9 @@ describe('Settings', () => {
     expect(screen.getByRole('link', { name: 'Family' })).toHaveAttribute('href', '#family');
     expect(screen.getByRole('region', { name: 'Family' })).toHaveAttribute('id', 'family');
     expect(screen.getByRole('link', { name: 'Appearance' })).toHaveAttribute('href', '#appearance');
+    expect(screen.getByRole('link', { name: 'Email preferences' })).toHaveAttribute(
+      'href',
+      '#contact',
+    );
   });
 });
