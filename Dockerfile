@@ -9,7 +9,7 @@ ARG VITE_SUPABASE_URL=
 ARG VITE_SUPABASE_PUBLISHABLE_KEY=
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:1.30-alpine-slim
+FROM nginxinc/nginx-unprivileged:1.31-alpine-slim
 # Pick up Alpine security fixes (e.g. zlib) published after the base image was built.
 USER root
 RUN apk upgrade --no-cache
